@@ -10,6 +10,18 @@ struct tdActor;
 struct tdMesh;
 struct tdPhysicsData;
 struct tdBoundingBox;
+struct tdGameMode;
+
+typedef void (*UpdateLoopFunction)(struct tdGameMode*);
+typedef void (*DrawFunction)(struct tdGameMode*);
+
+typedef struct tdGameMode{
+    SDC_Camera* camera;
+    SDC_Render* render;
+    UpdateLoopFunction updateLoopFunction;
+    DrawFunction drawFunction;
+    char* name; 
+} tdGameMode;
 
 // Holds bounding box of the actor
 typedef struct tdBoundingBox{

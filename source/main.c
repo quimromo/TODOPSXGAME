@@ -33,7 +33,6 @@ static u_short piramid_indices[] = {
 
 static SDC_Mesh3D piramidMesh = { piramid_vertices, piramid_indices, NULL, 12, 4, POLIGON_VERTEX };
 
-
 SDC_Mesh3D* GenerateProceduralTerrain();
 long GetHeightAtXZ(long x, long z);
 void DrawHouses(SDC_Render* render, SDC_Camera* camera);
@@ -57,8 +56,10 @@ MATRIX MVP;
 
 SDC_Mesh3D* terrainMesh = NULL;
 
+tdGameMode* currentGameMode = NULL;
 
-int bDrawHouses = 1;
+
+int bDrawHouses = 0;
 extern unsigned long _binary_tileset_tim_start[];
 
 void processInput(void)
@@ -147,17 +148,12 @@ void adjustCamera(void)
     dcCamera_ApplyCameraTransform(&camera, &transform, &MVP);
 }
 
-void drawScene(void)
+void drawScene(tdGameMode* gameMode)
 {
-    if(bDrawHouses)
-    {
-        DrawHouses(&render, &camera);
-        return;
-    }
     FntPrint("Super TODO Game\n");
 
     // Draw the axis
-    dcMisc_DrawAxis(&render, &camera);
+    dcMisc_DrawAxis(gameMode->render, gameMode->camera);
 
     // Draw terrain
     MATRIX terrainMVP = {0};
@@ -165,7 +161,7 @@ void drawScene(void)
     RotMatrix(&rot0, &terrainMVP);
     terrainMVP.t[1] = -512;
 
-    dcCamera_ApplyCameraTransform(&camera, &terrainMVP, &terrainMVP);
+    dcCamera_ApplyCameraTransform(gameMode->camera, &terrainMVP, &terrainMVP);
     SDC_DrawParams terrainParams = { 0 };
 
     dcRender_DrawMesh(&render, terrainMesh, &terrainMVP, &terrainParams );
@@ -195,6 +191,43 @@ void DrawHouses(SDC_Render* render, SDC_Camera* camera)
 
     int numActors = sizeof(levelData_LVL_TestScene) / sizeof(levelData_LVL_TestScene[0]);
     DrawActorArray(levelData_LVL_TestScene, numActors, render, camera, 1);
+}
+
+void HousesDrawFunction(tdGameMode* gameMode)
+{
+    DrawHouses(gameMode->render, gameMode->camera);
+}
+
+void HousesUpdateLoop(tdGameMode* gameMode)
+{
+
+}
+
+void SceneDrawFunction(tdGameMode* gameMode)
+{
+    adjustCamera();
+    drawScene(gameMode);
+}
+
+void SceneUpdateLoop(tdGameMode* gameMode)
+{
+    processInput();
+}
+
+void UpdateGameMode(tdGameMode* gameMode)
+{
+    if(gameMode->updateLoopFunction)
+    {
+        gameMode->updateLoopFunction(gameMode);
+    }
+}
+
+void DrawGameMode(tdGameMode* gameMode)
+{
+    if(gameMode->drawFunction)
+    {
+        gameMode->drawFunction(gameMode);
+    }
 }
 
 int main(void) 
@@ -230,11 +263,41 @@ int main(void)
         InitializeActorBoundingBoxBasedOnMesh(&levelData_LVL_TestScene[i]);
     }
 
+    tdGameMode housesGameMode;
+    housesGameMode.camera = &camera;
+    housesGameMode.render = &render;
+    housesGameMode.updateLoopFunction = &HousesUpdateLoop;
+    housesGameMode.drawFunction = &HousesDrawFunction;
+
+    tdGameMode sceneGameMode;
+    sceneGameMode.camera = &camera;
+    sceneGameMode.render = &render;
+    sceneGameMode.updateLoopFunction = &SceneUpdateLoop;
+    sceneGameMode.drawFunction = &SceneDrawFunction;
+
+    tdGameMode* gameModes[] = { &sceneGameMode, &housesGameMode};
+    u_long gameModeIdx = 0;
+    u_long prevStartState = 0;
+
     while (1) {
 
-        processInput();
-        adjustCamera();
-        drawScene();
+        // Cycle game-modes by pressing start
+        u_long padState = PadRead(0);
+        u_long startState = _PAD(0,PADstart ) & padState;
+        if( !startState && prevStartState)
+        {
+            gameModeIdx++;
+            int numGameModes = sizeof(gameModes) / sizeof(gameModes[0]);
+            if(gameModeIdx >= numGameModes)
+            {
+                gameModeIdx = 0;
+            }
+        }
+        prevStartState = startState;
+
+        // Update and draw the current game mode
+        UpdateGameMode(gameModes[gameModeIdx]);
+        DrawGameMode(gameModes[gameModeIdx]);
 
         dcRender_SwapBuffers(&render);
     }
