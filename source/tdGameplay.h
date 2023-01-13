@@ -27,7 +27,6 @@ typedef struct tdPhysicsData{
 // Actual mesh data, mesh + texture
 typedef struct tdMesh{
     SDC_Mesh3D* mesh;
-    TIM_IMAGE* texture;
     u_long* texture_tim;
 } tdMesh;
 

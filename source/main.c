@@ -101,7 +101,7 @@ int main(void)
     int numActors = sizeof(levelData_LVL_TestScene) / sizeof(levelData_LVL_TestScene[0]);
     for(int i = 0; i<numActors; ++i)
     {
-        levelData_LVL_TestScene[i].meshData.texture = &tim_tileset;
+        levelData_LVL_TestScene[i].meshData.mesh->tim = &tim_tileset;
         InitializeActorBoundingBoxBasedOnMesh(&levelData_LVL_TestScene[i]);
     }
 
