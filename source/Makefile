@@ -1,7 +1,7 @@
 TARGET = MAIN
 TYPE = ps-exe
 
-SRCS = main.c \
+SRCS = main.c tdGameplay.c tileset.tim \
 		../third_party/common/syscalls/printf.s \
 		../third_party/common/crt0/crt0.s \
 		dcLibPsx/src/dcMemory.c\
@@ -14,6 +14,8 @@ SRCS = main.c \
 CPPFLAGS += -I../third_party/common
 CPPFLAGS += -I../third_party/psyq/include
 CPPFLAGS += -I./dcLibPsx/include
+CPPFLAGS += -I./assets
+CPPFLAGS += -I./scenes
 LDFLAGS += -L../third_party/psyq/lib
 LDFLAGS += -Wl,--start-group
 LDFLAGS += -lapi

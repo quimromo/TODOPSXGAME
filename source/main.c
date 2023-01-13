@@ -15,6 +15,9 @@
 #include "dcMisc.h"
 #include "dcCollision.h"
 
+#include "tdGameplay.h"
+#include "scenes/LVL_TestScene.h"
+
 #define CUBESIZE 196 
 
 static SDC_Vertex cube_vertices[] = {
@@ -29,6 +32,26 @@ static u_short cube_indices[] = {
 };
 
 static SDC_Mesh3D cubeMesh = { cube_vertices, cube_indices, NULL, 36, 8, POLIGON_VERTEX };
+
+int bDrawHouses = 1;
+extern unsigned long _binary_tileset_tim_start[];
+
+void DrawHouses(SDC_Render* render, SDC_Camera* camera)
+{
+    long cameraPosUnrealX = 0;
+    long cameraPosUnrealY = -2000;
+    long cameraPosUnrealZ = 1000;
+
+    long distanceX = -cameraPosUnrealX;
+    long distanceY = cameraPosUnrealZ;
+    long distanceZ = -cameraPosUnrealY;
+
+    dcCamera_SetCameraPosition(camera, distanceX, distanceY, distanceZ);
+    dcCamera_LookAt(camera, &VECTOR_ZERO);
+
+    int numActors = sizeof(levelData_LVL_TestScene) / sizeof(levelData_LVL_TestScene[0]);
+    DrawActorArray(levelData_LVL_TestScene, numActors, render, camera, 1);
+}
 
 int main(void) 
 {
@@ -45,7 +68,7 @@ int main(void)
     int  height = 240;
 
     CVECTOR bgColor = {60, 120, 120};
-    dcRender_Init(&render, width, height, bgColor, 4096, 8192, RENDER_MODE_PAL);
+    dcRender_Init(&render, width, height, bgColor, 4096, 16384*10, RENDER_MODE_PAL);
     dcCamera_SetScreenResolution(&camera, width, height);
     dcCamera_SetCameraPosition(&camera, 0, 0, distance);
     dcCamera_LookAt(&camera, &VECTOR_ZERO);
@@ -72,49 +95,66 @@ int main(void)
     SVECTOR lightColor1 = {0, DC_ONE, 0};
     dcRender_SetLight(&render, 1, &lightDir1, &lightColor1);
 
+    TIM_IMAGE tim_tileset;
+    dcRender_LoadTexture(&tim_tileset, _binary_tileset_tim_start);
+
+    int numActors = sizeof(levelData_LVL_TestScene) / sizeof(levelData_LVL_TestScene[0]);
+    for(int i = 0; i<numActors; ++i)
+    {
+        levelData_LVL_TestScene[i].meshData.texture = &tim_tileset;
+        InitializeActorBoundingBoxBasedOnMesh(&levelData_LVL_TestScene[i]);
+    }
+
     while (1) {
 
         // Read pad state and move primitive
         u_long padState = PadRead(0);
 
-        if( _PAD(0,PADLup ) & padState )
+        if(bDrawHouses)
         {
-            translation.vy -= 32;
-        }
-        if( _PAD(0,PADLdown ) & padState )
-        {
-            translation.vy += 32;
-        }
-        if( _PAD(0,PADLright ) & padState )
-        {
-            translation.vx -= 32;
-        }
-        if( _PAD(0,PADLleft ) & padState )
-        {
-            translation.vx += 32;
-        }
-
-        rotation.vy += 16;
-
-        RotMatrix(&rotation, &transform);
-        TransMatrix(&transform, &translation);
-        dcCamera_ApplyCameraTransform(&camera, &transform, &transform);
-
-        FntPrint("GameDev Challenge Sphere Demo\n");
-
-        SVECTOR rayDir = { camera.viewMatrix.m[2][0], camera.viewMatrix.m[2][1], camera.viewMatrix.m[2][2] };
-        VectorNormalSS(&rayDir, &rayDir);
-        if( dcCollision_RaySphereInteresct(&camera.position, &rayDir, &translation, CUBESIZE ) > 0 )
-        {
-            drawParams.bUseConstantColor = 1;
-            drawParams.bLighting = 1;
-            dcRender_DrawMesh(&render, sphereMesh, &transform, &drawParams);
+            DrawHouses(&render, &camera);
         }
         else
         {
-            drawParams.bUseConstantColor = 1;
-            drawParams.bLighting = 0;
-            dcRender_DrawMesh(&render, &cubeMesh, &transform, &drawParams );
+            if( _PAD(0,PADLup ) & padState )
+            {
+                translation.vy -= 32;
+            }
+            if( _PAD(0,PADLdown ) & padState )
+            {
+                translation.vy += 32;
+            }
+            if( _PAD(0,PADLright ) & padState )
+            {
+                translation.vx -= 32;
+            }
+            if( _PAD(0,PADLleft ) & padState )
+            {
+                translation.vx += 32;
+            }
+
+            rotation.vy += 16;
+
+            RotMatrix(&rotation, &transform);
+            TransMatrix(&transform, &translation);
+            dcCamera_ApplyCameraTransform(&camera, &transform, &transform);
+
+            FntPrint("GameDev Challenge Sphere Demo\n");
+
+            SVECTOR rayDir = { camera.viewMatrix.m[2][0], camera.viewMatrix.m[2][1], camera.viewMatrix.m[2][2] };
+            VectorNormalSS(&rayDir, &rayDir);
+            if( dcCollision_RaySphereInteresct(&camera.position, &rayDir, &translation, CUBESIZE ) > 0 )
+            {
+                drawParams.bUseConstantColor = 1;
+                drawParams.bLighting = 1;
+                dcRender_DrawMesh(&render, sphereMesh, &transform, &drawParams);
+            }
+            else
+            {
+                drawParams.bUseConstantColor = 1;
+                drawParams.bLighting = 0;
+                dcRender_DrawMesh(&render, &cubeMesh, &transform, &drawParams );
+            }
         }
 
         dcRender_SwapBuffers(&render);
