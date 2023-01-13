@@ -36,6 +36,7 @@ static SDC_Mesh3D piramidMesh = { piramid_vertices, piramid_indices, NULL, 12, 4
 
 SDC_Mesh3D* GenerateProceduralTerrain();
 long GetHeightAtXZ(long x, long z);
+void DrawHouses(SDC_Render* render, SDC_Camera* camera);
 
 SDC_Render render;
 SDC_DrawParams drawParams = {
