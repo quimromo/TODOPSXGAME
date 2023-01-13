@@ -14,6 +14,9 @@
 #include "dcRender.h"
 #include "dcMisc.h"
 
+#include "tdGameplay.h"
+#include "scenes/LVL_TestScene.h"
+
 #define CUBESIZE 196 
 
 static SDC_Vertex piramid_vertices[] = {
@@ -52,6 +55,10 @@ long cameraHeight = 600;
 MATRIX MVP;
 
 SDC_Mesh3D* terrainMesh = NULL;
+
+
+int bDrawHouses = 1;
+extern unsigned long _binary_tileset_tim_start[];
 
 void processInput(void)
 {
@@ -141,6 +148,11 @@ void adjustCamera(void)
 
 void drawScene(void)
 {
+    if(bDrawHouses)
+    {
+        DrawHouses(&render, &camera);
+        return;
+    }
     FntPrint("Super TODO Game\n");
 
     // Draw the axis
@@ -166,6 +178,24 @@ void drawScene(void)
     dcRender_DrawLine(&render, &cubeCenter, &frontPoint, &MVP, &drawParams.constantColor, 4 );
 }
 
+
+void DrawHouses(SDC_Render* render, SDC_Camera* camera)
+{
+    long cameraPosUnrealX = 0;
+    long cameraPosUnrealY = -2000;
+    long cameraPosUnrealZ = 1000;
+
+    long distanceX = -cameraPosUnrealX;
+    long distanceY = cameraPosUnrealZ;
+    long distanceZ = -cameraPosUnrealY;
+
+    dcCamera_SetCameraPosition(camera, distanceX, distanceY, distanceZ);
+    dcCamera_LookAt(camera, &VECTOR_ZERO);
+
+    int numActors = sizeof(levelData_LVL_TestScene) / sizeof(levelData_LVL_TestScene[0]);
+    DrawActorArray(levelData_LVL_TestScene, numActors, render, camera, 1);
+}
+
 int main(void) 
 {
     dcMemory_Init();
@@ -179,7 +209,7 @@ int main(void)
     terrainMesh = GenerateProceduralTerrain();
 
     CVECTOR bgColor = {60, 120, 120};
-    dcRender_Init(&render, width, height, bgColor, 4096, 65536, RENDER_MODE_PAL);
+    dcRender_Init(&render, width, height, bgColor, 4096, 16384*10, RENDER_MODE_PAL);
     dcCamera_SetScreenResolution(&camera, width, height);
     dcCamera_SetCameraPosition(&camera, 0, cameraHeight, distance);
     dcCamera_LookAt(&camera, &VECTOR_ZERO);
@@ -188,6 +218,16 @@ int main(void)
     RotMatrix(&rotation, &transform);
     TransMatrix(&transform, &translation);
 
+
+    TIM_IMAGE tim_tileset;
+    dcRender_LoadTexture(&tim_tileset, _binary_tileset_tim_start);
+
+    int numActors = sizeof(levelData_LVL_TestScene) / sizeof(levelData_LVL_TestScene[0]);
+    for(int i = 0; i<numActors; ++i)
+    {
+        levelData_LVL_TestScene[i].meshData.texture = &tim_tileset;
+        InitializeActorBoundingBoxBasedOnMesh(&levelData_LVL_TestScene[i]);
+    }
 
     while (1) {
 
