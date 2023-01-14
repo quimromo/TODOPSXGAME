@@ -5,13 +5,13 @@
 #include <libgpu.h>
 #include <dcrender.h>
 #include "dcCamera.h"
+#include "dcCollision.h"
 
 struct tdActor;
 struct tdMesh;
 struct tdPhysicsData;
 struct tdBoundingBox;
 struct tdGameMode;
-struct SDC_Render;
 
 typedef void (*InitFunction)(struct tdGameMode* gameMode);
 typedef void (*UpdateLoopFunction)(struct tdGameMode*);
@@ -52,13 +52,6 @@ typedef struct tdActor{
     tdPhysicsData physicsData;
     tdMesh meshData;
 } tdActor;
-
-typedef struct SDC_OOBB
-{
-    VECTOR center;
-    VECTOR halfSize;
-    SVECTOR rotation;
-} SDC_OOBB;
 
 typedef struct tdLoncha{
     tdActor* actors;

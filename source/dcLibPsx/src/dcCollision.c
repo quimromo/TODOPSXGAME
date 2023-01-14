@@ -46,5 +46,144 @@ long dcCollision_RayBOXInteresct( VECTOR* rayOrigin, SVECTOR* rayDir, VECTOR* bo
 
 long dcCollision_SpheresOverlap( VECTOR* sphere1Center, VECTOR* sphere2center, long sphere1Radius, long sphere2Radius )
 {
+    long radiusSum = sphere1Radius + sphere2Radius;
+    return DC_SQDIST32(sphere1Center, sphere2center) - DC_MUL64(radiusSum, radiusSum);
+}
+
+long dcCollision_SphereAABBOverlap( VECTOR* boxHalfSize, VECTOR* boxCenter, VECTOR* sphereCenter, long sphereRadius )
+{
+    VECTOR p = { .vx = sphereCenter->vx - boxCenter->vx, .vy = sphereCenter->vy - boxCenter->vy, .vz = sphereCenter->vz - boxCenter->vz };
+    p.vx = abs(p.vx) - boxCenter->vx;
+    p.vy = abs(p.vy) - boxCenter->vy;
+    p.vz = abs(p.vz) - boxCenter->vz;
+
+    VECTOR maxP0 = { DC_MAX(p.vx, 0), DC_MAX(p.vy, 0), DC_MAX(p.vz, 0) };
+    return DC_LENGTH(&maxP0) + DC_MIN( DC_MAX(p.vx, DC_MAX(p.vy, p.vz)), 0 ) - sphereRadius;
+
+    // float sdBox( vec3 p, vec3 b )
+    // {
+    // vec3 q = abs(p) - b;
+    // return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+    // }
+}
+
+long dcCollision_SphereBOXOverlap( VECTOR* boxHalfSize, MATRIX* boxTransform,  VECTOR* sphereCenter, long sphereRadius )
+{
+    VECTOR transformedSphereCenter;
+    ApplyMatrixLV(boxTransform, sphereCenter, &transformedSphereCenter );
+
+    VECTOR boxCenter = {0};
+    return dcCollision_SphereAABBOverlap(boxHalfSize, &boxCenter, sphereCenter, sphereRadius );
+
+}
+
+
+void dcBF_Init(SDC_Broadphase* bf, unsigned maxShapes)
+{
+    bf->shapes = malloc3(maxShapes * sizeof(SDC_Shape));
+    bf->entries = malloc3(maxShapes * sizeof(SDC_ShapeEntry));
+    bf->numShapes = 0;
+    bf->maxShapes = maxShapes;
+    bf->freeEntry = 0;
+    for(int i = 0; i < maxShapes; ++i)
+    {
+        bf->entries[i].bAlive = 0;
+        bf->entries[i].idx = i + 1;
+    }
+    bf->entries[maxShapes - 1].idx = -1;
+}
+
+unsigned dcBF_addShape( SDC_Broadphase* bf, SDC_Shape* shape )
+{
+    if( bf->freeEntry != -1 )
+    {
+        unsigned retVal = bf->freeEntry;
+        bf->freeEntry = bf->entries[retVal].idx;
+        bf->entries[retVal].bAlive = 1;
+        bf->entries[retVal].idx = bf->numShapes;
+        bf->shapes[bf->numShapes] = *shape;
+        bf->shapes[bf->numShapes].shapeId = retVal;
+        bf->numShapes++;
+        return retVal;
+    }
+    return -1;
+}
+
+void dcBF_removeShape( SDC_Broadphase* bf, unsigned shapeId )
+{
+    unsigned shapeIdx = bf->entries[shapeId].idx;
+    bf->shapes[shapeIdx] = bf->shapes[bf->numShapes - 1];
+    bf->entries[bf->shapes[shapeIdx].shapeId].idx = shapeIdx;
+    bf->numShapes--;
+    bf->entries[shapeId].bAlive = 0;
+    bf->entries[shapeId].idx = bf->freeEntry;
+    bf->freeEntry = shapeId;
+}
+
+void dcBF_moveShape( SDC_Broadphase* bf, unsigned shapeId, SVECTOR* newPos )
+{
+
+}
+
+int dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape )
+{
+    for(int i = 0; i < bf->numShapes; ++i)
+    {
+        if( dcCollision_shapesCollide(&bf->shapes[i], shape) )
+        {
+            return 1;
+        }
+    }
     return 0;
 }
+
+int dcCollision_shapesCollide(SDC_Shape* shapeA, SDC_Shape* shapeB)
+{
+    // int swap = shapeA->shapeType > shapeB->shapeType;
+    // if(swap)
+    // {
+    //     SDC_Shape* aux = shapeA;
+    //     shapeA = shapeB;
+    //     shapeB = aux;
+    // }
+
+    if(shapeB->shapeType != ST_SPHERE )
+    {
+        return 0;
+    }
+
+    switch(shapeA->shapeType)
+    {
+        case ST_AABB:
+        {
+            VECTOR center = 
+            {
+                .vx = (shapeA->aabb.vmin.vx + shapeA->aabb.vmax.vx) >> 1,
+                .vy = (shapeA->aabb.vmin.vy + shapeA->aabb.vmax.vy) >> 1,
+                .vz = (shapeA->aabb.vmin.vz + shapeA->aabb.vmax.vz) >> 1
+            };
+            VECTOR halfSize = 
+            {
+                .vx = shapeA->aabb.vmax.vx - center.vx,
+                .vy = shapeA->aabb.vmax.vy - center.vy,
+                .vz = shapeA->aabb.vmax.vz - center.vz
+            };
+            return dcCollision_SphereAABBOverlap(&halfSize, &center, &shapeB->sphere.center, shapeB->sphere.radius);
+        }
+        case ST_OOBB:
+        {
+            MATRIX m = {0};
+            RotMatrix(&shapeA->oobb.rotation, &m );
+            TransMatrix( &m, &shapeA->oobb.center );
+            return dcCollision_SphereBOXOverlap(&shapeA->oobb.halfSize, &m, &shapeB->sphere.center, shapeB->sphere.radius);
+        }
+        case ST_SPHERE:
+        {
+            return dcCollision_SpheresOverlap( &shapeA->sphere.center, &shapeB->sphere.center, shapeA->sphere.radius, shapeB->sphere.radius );
+        }
+    }
+
+    return 0;
+}
+
+

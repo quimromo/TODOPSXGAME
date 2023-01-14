@@ -12,6 +12,7 @@
 #define DC_ONE 0x1000 // 4096 
 #define DC_EPSILON 1
 
+
 extern VECTOR VECTOR_UP;
 extern VECTOR VECTOR_ZERO;
 
@@ -20,14 +21,22 @@ extern VECTOR VECTOR_ZERO;
 
 #define DC_MUL(fixedA, fixedB) ( ((fixedA) * (fixedB)) >> 12 )
 #define DC_DIV(fixedA, fixedB) ( ((fixedA) << 12) / (fixedB) )
-#define DC_DOT(v1, v2) (DC_MUL((v1)->vx, (v2)->vx) + DC_MUL((v1)->vy, (v2)->vy) + DC_MUL((v1)->vz, (v2)->vz))
-#define DC_DOT64(v1, v2) (DC_MUL64((v1)->vx, (v2)->vx) + DC_MUL64((v1)->vy, (v2)->vy) + DC_MUL64((v1)->vz, (v2)->vz))
+
 static long DC_MUL64(long v0, long v1);
 
 #define DC_MAX(a,b) (((a) > (b)) ? (a) : (b))
 #define DC_MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define DC_CLAMP(value, min, max)(DC_MIN(DC_MAX((value), (min)), (max)))
 #define DC_LERP(fixedA, fixedB, alpha)( DC_MUL64(fixedA, DC_ONE - (alpha)) + DC_MUL64(fixedB, alpha) )
+
+#define DC_DOT(v1, v2) (DC_MUL((v1)->vx, (v2)->vx) + DC_MUL((v1)->vy, (v2)->vy) + DC_MUL((v1)->vz, (v2)->vz))
+#define DC_DOT64(v1, v2) (DC_MUL64((v1)->vx, (v2)->vx) + DC_MUL64((v1)->vy, (v2)->vy) + DC_MUL64((v1)->vz, (v2)->vz))
+
+static long DC_SQDIST32(VECTOR* v1, VECTOR* v2);
+static long DC_SQDIST16(SVECTOR* v1, SVECTOR* v2);
+
+#define DC_LENGTH(v) SquareRoot12(DC_DOT64((v), (v)))
+
 static void DC_LERP_COLOR( const CVECTOR* c0, const CVECTOR* c1, long alpha, CVECTOR* cOut);
 
 short   dcMath_DotProduct(const SVECTOR* v0, const SVECTOR* v1);
@@ -66,6 +75,18 @@ static inline void DC_LERP_COLOR( const CVECTOR* c0, const CVECTOR* c1, long alp
     cOut->r = DC_MUL(DC_ONE - alpha, c0->r) + DC_MUL(alpha, c1->r);
     cOut->g = DC_MUL(DC_ONE - alpha, c0->g) + DC_MUL(alpha, c1->g);
     cOut->b = DC_MUL(DC_ONE - alpha, c0->b) + DC_MUL(alpha, c1->b);
+}
+
+static inline long DC_SQDIST32(VECTOR* v1, VECTOR* v2)
+{
+    VECTOR diff = {v1->vx - v2->vx, v1->vy - v2->vy, v1->vz - v2->vz };
+    return DC_DOT64(&diff, &diff);
+}
+
+static inline long DC_SQDIST16(SVECTOR* v1, SVECTOR* v2)
+{
+    SVECTOR diff = {v1->vx - v2->vx, v1->vy - v2->vy, v1->vz - v2->vz };
+    return DC_DOT(&diff, &diff);
 }
 
 #endif /* _DC_MATH_H */
