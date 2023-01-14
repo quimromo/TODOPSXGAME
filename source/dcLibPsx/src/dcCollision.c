@@ -132,17 +132,17 @@ void dcBF_moveShape( SDC_Broadphase* bf, unsigned shapeId, SVECTOR* newPos )
 
 }
 
-int dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape )
+SDC_Shape* dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape )
 {
     for(int i = 0; i < bf->numShapes; ++i)
     {
         //printf("%d - OOBB at: ( %d, %d, %d )\n", i, bf->shapes[i].oobb.center.vx, bf->shapes[i].oobb.center.vy, bf->shapes[i].oobb.center.vz );
         if( dcCollision_shapesCollide(&bf->shapes[i], shape) )
         {
-            return 1;
+            return &bf->shapes[i];
         }
     }
-    return 0;
+    return NULL;
 }
 
 int dcCollision_shapesCollide(SDC_Shape* shapeA, SDC_Shape* shapeB)

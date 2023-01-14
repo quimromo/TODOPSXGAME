@@ -83,7 +83,8 @@ void dcBF_Init(SDC_Broadphase* bf, unsigned maxShapes);
 unsigned dcBF_addShape( SDC_Broadphase* bf, SDC_Shape* shape );
 void dcBF_removeShape( SDC_Broadphase* bf, unsigned shapeId );
 void dcBF_moveShape( SDC_Broadphase* bf, unsigned shapeId, SVECTOR* newPos );
-int dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape );
+SDC_Shape* dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape );
+
 int dcCollision_shapesCollide(SDC_Shape* shapeA, SDC_Shape* shapeB);
 
 
