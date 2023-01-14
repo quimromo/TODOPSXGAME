@@ -198,21 +198,21 @@ void DrawHouses(SDC_Render* render, SDC_Camera* camera)
     // input up/down will determine movement along the front vector of the cube
     if( _PAD(0,PADLup ) & padState )
     {
-        cameraOffset.vz += -32;
+        cameraOffset.vz += -128;
     }
     if( _PAD(0,PADLdown ) & padState )
     {
-        cameraOffset.vz += 32;
+        cameraOffset.vz += 128;
     }
 
     // Input right/left will determine rotation aroung Y axis.
     if( _PAD(0,PADLright ) & padState )
     {
-        cameraOffset.vx += 32;
+        cameraOffset.vx += 128;
     }
     if( _PAD(0,PADLleft ) & padState )
     {
-        cameraOffset.vx += -32;
+        cameraOffset.vx += -128;
     }
 
 
@@ -292,7 +292,7 @@ int main(void)
 
 
     TIM_IMAGE tim_tileset;
-    dcRender_LoadTexture(&tim_tileset, _binary_assets_textures_waterTileset_tim_start);
+    dcRender_LoadTexture(&tim_tileset, _binary_assets_textures_waterTilesetSmall_tim_start);
 
     for(int i = 0; i<levelData_LVL_Lonchas.numActors; ++i)
     {
