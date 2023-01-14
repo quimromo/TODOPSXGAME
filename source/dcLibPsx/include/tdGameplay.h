@@ -5,6 +5,7 @@
 #include <libgpu.h>
 #include <dcrender.h>
 #include "dcCamera.h"
+#include "dcCollision.h"
 
 struct tdActor;
 struct tdMesh;
@@ -51,13 +52,6 @@ typedef struct tdActor{
     tdPhysicsData physicsData;
     tdMesh meshData;
 } tdActor;
-
-typedef struct SDC_OOBB
-{
-    VECTOR center;
-    VECTOR halfSize;
-    SVECTOR rotation;
-} SDC_OOBB;
 
 typedef struct tdLoncha{
     tdActor* actors;
