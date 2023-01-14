@@ -46,6 +46,8 @@ long MaxSteering = 40;
 long MinSteering = 3;
 int PrevSteering = STEERING_NONE;
 
+extern int bEpicDebugMode;
+
 tdLoncha GetNewLoncha(void)
 {
     tdLoncha newLoncha = levelData_LVL_Lonchas;
@@ -161,9 +163,16 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     VECTOR NextLonchaOffset = lonchaOffset;
     NextLonchaOffset.vz -= offsetToChangeLoncha;
 
-    DrawActorArrayOffset(currentLoncha.actors, currentLoncha.numActors, lonchaOffset, render, gameMode->camera, 1);
-    DrawActorArrayOffset(nextLoncha.actors, nextLoncha.numActors, NextLonchaOffset, render, gameMode->camera, 1);
-    //DrawActorArrayOffset(levelData_TestTile, 2, lonchaOffset, render, gameMode->camera, 0);
+    // Draw the needed lonchas
+    DrawLoncha(&currentLoncha, lonchaOffset, render, gameMode->camera);
+    DrawLoncha(&nextLoncha, NextLonchaOffset, render, gameMode->camera);
+
+    // If debugging draw collisions
+    if(bEpicDebugMode)
+    {
+        DrawLonchaCollisions(&currentLoncha, lonchaOffset, render, gameMode->camera);
+        DrawLonchaCollisions(&nextLoncha, NextLonchaOffset, render, gameMode->camera);
+    }
 
     DrawActor(&Player,render,gameMode->camera);
 }
