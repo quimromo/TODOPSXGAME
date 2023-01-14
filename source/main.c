@@ -13,6 +13,7 @@
 #include "dcCamera.h"
 #include "dcRender.h"
 #include "dcMisc.h"
+#include "dcCollision.h"
 
 #include "tdGameplay.h"
 #include "riverGameMode.h"
@@ -43,6 +44,9 @@ int bDrawHouses = 0;
 SVECTOR cameraOffset = {0, 0, 0};
 
 int bEpicDebugMode = 0;
+SDC_Mesh3D* sphereMesh;
+
+SDC_Broadphase Broadphase;
 
 void DrawLoncha(tdLoncha* loncha, SDC_Render* render, SDC_Camera* camera)
 {
@@ -99,6 +103,28 @@ void DrawHouses(SDC_Render* render, SDC_Camera* camera)
     DrawLoncha(&levelData_LVL_Lonchas, render, camera);
     if(bEpicDebugMode)
     {
+        MATRIX sphereTransform = {0};
+        SVECTOR zeroRot = {0};
+        RotMatrix(&zeroRot, &sphereTransform);
+        TransMatrix(&sphereTransform, &cameraLookAt);
+
+        dcCamera_ApplyCameraTransform(camera, &sphereTransform, &sphereTransform);
+        
+        SDC_Shape sphereShape;
+        sphereShape.shapeType = ST_SPHERE;
+        sphereShape.sphere.center = cameraLookAt; 
+        sphereShape.sphere.radius = 512;
+
+        if( dcBF_shapeCollides(&Broadphase, &sphereShape ) )
+        {
+            drawParams.bUseConstantColor = 1;
+        }
+        else{
+            drawParams.bUseConstantColor = 0;
+        }
+
+
+        dcRender_DrawMesh( render, sphereMesh, &sphereTransform, &drawParams);
         DrawLonchaCollisions(&levelData_LVL_Lonchas, render, camera);
     }
 }
@@ -154,10 +180,22 @@ int main(void)
     dcMemory_Init();
     PadInit(0);
     InitGeom();
-
     
     CVECTOR bgColor = {60, 120, 120};
     dcRender_Init(&render, SCREEN_WIDTH, SCREEN_HEIGHT, bgColor, 4096, 16384*10, RENDER_MODE_PAL);
+
+    dcBF_Init(&Broadphase, 64);
+    for(int i = 0; i < levelData_LVL_Lonchas.numCollisions; ++i)
+    {
+        SDC_Shape shape;
+        shape.shapeType = ST_OOBB;
+        shape.oobb = levelData_LVL_Lonchas.collisions[i];
+        dcBF_addShape(&Broadphase, &shape);
+
+    }
+
+    sphereMesh = dcMisc_generateSphereMesh(512, 7, 7);
+    
     dcCamera_SetScreenResolution(&camera, SCREEN_WIDTH, SCREEN_HEIGHT);
     dcCamera_SetCameraPosition(&camera, 0, cameraHeight, distance);
     dcCamera_LookAt(&camera, &VECTOR_ZERO);
