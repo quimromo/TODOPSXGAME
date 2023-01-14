@@ -2,10 +2,10 @@
 #include "tdGameplay.h"
 #include "lonchaBase.h"
 
-extern unsigned long _binary_assets_textures_TilesetDelCampo_tim_start[];
+extern unsigned long _binary_assets_textures_waterTileset_tim_start[];
 
 tdActor levelData_LVL_Lonchas_actors[] = {
-{.position = {0,0,0}, .meshData={.mesh=&lonchaBase_Mesh, .texture_tim=_binary_assets_textures_TilesetDelCampo_tim_start},
+{.position = {0,0,0}, .meshData={.mesh=&lonchaBase_Mesh, .texture_tim=_binary_assets_textures_waterTileset_tim_start},
 .scale = {4000,4000,4000},
 .rotation={0, 0, 0}}
 };
