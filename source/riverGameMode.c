@@ -42,6 +42,7 @@ int scrollSpeed = 65;
 long SteeringStep = 8;
 long FrictionStep = 4;
 
+short MaxRotationAngle = 30;
 long MaxSteering = 40;
 long MinSteering = 3;
 int PrevSteering = STEERING_NONE;
@@ -83,7 +84,7 @@ void updatePlayer()
     u_long padState = PadRead(0);
     if( _PAD(0,PADLright ) & padState )
     {
-        if (CurrentSteering == 0)
+        if (CurrentSteering == 0 && PrevSteering == STEERING_NONE)
         {
             CurrentSteering = MinSteering;
         }
@@ -100,7 +101,7 @@ void updatePlayer()
     }
     if( _PAD(0,PADLleft ) & padState )
     {
-        if (CurrentSteering == 0)
+        if (CurrentSteering == 0 && PrevSteering == STEERING_NONE)
         {
             CurrentSteering = MinSteering;
         }
@@ -127,6 +128,9 @@ void updatePlayer()
             CurrentSteering -= DC_MIN(FrictionStep,DC_ABS(CurrentSteering));
         }
     }
+
+    //Update rotation
+    Player.rotation.vy = -CurrentSteering * 7;
 
     Player.position.vx += CurrentSteering;
 }
