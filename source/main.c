@@ -16,6 +16,7 @@
 
 #include "tdGameplay.h"
 #include "scenes/LVL_TestScene.h"
+#include "scenes/TestTile.h"
 
 #define CUBESIZE 196 
 
@@ -189,8 +190,8 @@ void DrawHouses(SDC_Render* render, SDC_Camera* camera)
     dcCamera_SetCameraPosition(camera, distanceX, distanceY, distanceZ);
     dcCamera_LookAt(camera, &VECTOR_ZERO);
 
-    int numActors = sizeof(levelData_LVL_TestScene) / sizeof(levelData_LVL_TestScene[0]);
-    DrawActorArray(levelData_LVL_TestScene, numActors, render, camera, 1);
+    int numActors = sizeof(levelData_TestTile) / sizeof(levelData_TestTile[0]);
+    DrawActorArray(levelData_TestTile, numActors, render, camera, 1);
 }
 
 void HousesDrawFunction(tdGameMode* gameMode)
@@ -200,7 +201,11 @@ void HousesDrawFunction(tdGameMode* gameMode)
 
 void HousesUpdateLoop(tdGameMode* gameMode)
 {
-
+    int numActors = sizeof(levelData_TestTile) / sizeof(levelData_TestTile[0]);
+    for (int i = 0; i < numActors; ++i)
+    {
+        levelData_TestTile[i].position.vz += speed;
+    }
 }
 
 void SceneDrawFunction(tdGameMode* gameMode)
@@ -276,7 +281,7 @@ int main(void)
     sceneGameMode.drawFunction = &SceneDrawFunction;
 
     tdGameMode* gameModes[] = { &sceneGameMode, &housesGameMode};
-    u_long gameModeIdx = 0;
+    u_long gameModeIdx = 1;
     u_long prevStartState = 0;
 
     while (1) {
