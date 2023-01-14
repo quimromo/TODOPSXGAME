@@ -21,7 +21,7 @@ tdLoncha nextLoncha;
 
 VECTOR lonchaOffset = {0};
 
-int scrollSpeed = 9;
+int scrollSpeed = 90;
 int offsetToChangeLoncha = 8900;
 
 tdLoncha GetNewLoncha(void)
@@ -34,16 +34,15 @@ void riverInitScene(tdGameMode* gameMode)
 {
     dcCamera_SetScreenResolution(gameMode->camera, SCREEN_WIDTH, SCREEN_HEIGHT);
     lonchaOffset = VECTOR_ZERO;
-    lonchaOffset.vz -= offsetToChangeLoncha >> 2; // pivot is in the center, so we offset half the mesh
     currentLoncha = GetNewLoncha();
     nextLoncha = GetNewLoncha();
 }
 
 void riverUpdateScene(tdGameMode* gameMode)
 {
-    int prevLonchaIdx = (offsetToChangeLoncha >> 2) + lonchaOffset.vz / offsetToChangeLoncha;
+    int prevLonchaIdx = (offsetToChangeLoncha >> 1) + lonchaOffset.vz / offsetToChangeLoncha;
     lonchaOffset.vz += scrollSpeed;
-    int newLonchaIdx = (offsetToChangeLoncha >> 2) + lonchaOffset.vz / offsetToChangeLoncha;
+    int newLonchaIdx = (offsetToChangeLoncha >> 1) + lonchaOffset.vz / offsetToChangeLoncha;
 
     if (prevLonchaIdx != newLonchaIdx)
     {
