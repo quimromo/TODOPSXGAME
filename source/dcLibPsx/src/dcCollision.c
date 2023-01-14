@@ -2,7 +2,39 @@
 #include "dcCollision.h"
 #include "dcMath.h"
 #include <stdio.h>
+#include "dcRender.h"
+#include "tdGameplay.h"
 
+void DrawCollBox(SVECTOR min, SVECTOR max, MATRIX* transform, SDC_Render* render,  SDC_Camera* camera, CVECTOR* drawColor)
+{
+    // Cube vertexs
+    SVECTOR v000 = { min.vx, min.vy, min.vz};
+    SVECTOR v001 = { min.vx, min.vy, max.vz};
+    SVECTOR v010 = { min.vx, max.vy, min.vz};
+    SVECTOR v011 = { min.vx, max.vy, max.vz};
+    SVECTOR v100 = { max.vx, min.vy, min.vz};
+    SVECTOR v101 = { max.vx, min.vy, max.vz};
+    SVECTOR v110 = { max.vx, max.vy, min.vz};
+    SVECTOR v111 = { max.vx, max.vy, max.vz};
+
+    // Cube edges
+    dcRender_DrawLine(render, &v000, &v100, transform, drawColor, 2);
+    dcRender_DrawLine(render, &v000, &v010, transform, drawColor, 2);
+    dcRender_DrawLine(render, &v000, &v001, transform, drawColor, 2);
+
+    dcRender_DrawLine(render, &v110, &v111, transform, drawColor, 2);
+    dcRender_DrawLine(render, &v011, &v111, transform, drawColor, 2);
+    dcRender_DrawLine(render, &v101, &v111, transform, drawColor, 2);
+
+    dcRender_DrawLine(render, &v001, &v101, transform, drawColor, 2);
+    dcRender_DrawLine(render, &v001, &v011, transform, drawColor, 2);
+
+    dcRender_DrawLine(render, &v010, &v011, transform, drawColor, 2);
+    dcRender_DrawLine(render, &v010, &v110, transform, drawColor, 2);
+
+    dcRender_DrawLine(render, &v100, &v101, transform, drawColor, 2);
+    dcRender_DrawLine(render, &v100, &v110, transform, drawColor, 2);
+}
 
 long dcCollision_RaySphereInteresct( VECTOR* rayOrigin, SVECTOR* rayDir, VECTOR* sphereCenter, long sphereRadius )
 {
@@ -126,18 +158,59 @@ void dcBF_removeShape( SDC_Broadphase* bf, unsigned shapeId )
     bf->entries[shapeId].idx = bf->freeEntry;
     bf->freeEntry = shapeId;
 }
+//   ST_SPHERE,
+ //   ST_OOBB,
+  //  ST_AABB
+void dcBF_scrollAllShapes(SDC_Broadphase* bf, long offset )
+{
+    for (int i = 0 ; i< bf->numShapes ; ++i)
+    {
+        if (bf->shapes[i].shapeType == ST_SPHERE)
+        {
+            bf->shapes[i].sphere.center.vz -= offset;
+        }
+        if (bf->shapes[i].shapeType == ST_OOBB)
+        {
+            bf->shapes[i].oobb.center.vz -= offset;
+        }
+        if (bf->shapes[i].shapeType == ST_AABB)
+        {
+            bf->shapes[i].aabb.vmax.vz -= offset;
+            bf->shapes[i].aabb.vmin.vz -= offset;
+        }
+    };
+}
 
 void dcBF_moveShape( SDC_Broadphase* bf, unsigned shapeId, SVECTOR* newPos )
 {
 
 }
 
-int dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape )
+int dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape , SDC_Render* DebugRenderer, SDC_Camera* camera)
 {
+    //DRAW DEBUG
+    // if (DebugRenderer && shape->shapeType == ST_SPHERE)
+    // {
+    //     SVECTOR min = { -shape->sphere.radius, -shape->sphere.radius, -shape->sphere.radius};
+    //     SVECTOR max = { shape->sphere.radius, shape->sphere.radius,  shape->sphere.radius};
+
+    //     CVECTOR drawColor = {255,255,60};
+    //     MATRIX transform;
+    //     transform.t[0] = shape->sphere.center.vx;
+    //     transform.t[1] = shape->sphere.center.vy;
+    //     transform.t[2] = shape->sphere.center.vz;
+    //     SVECTOR zeroRot = {0};
+    //     RotMatrix(&zeroRot, &transform);
+    //     dcCamera_ApplyCameraTransform(camera, &transform, &transform);
+        
+    //     DrawCollBox(min, max, &transform, DebugRenderer, camera, &drawColor);
+    // }
+
+
     for(int i = 0; i < bf->numShapes; ++i)
     {
         //printf("%d - OOBB at: ( %d, %d, %d )\n", i, bf->shapes[i].oobb.center.vx, bf->shapes[i].oobb.center.vy, bf->shapes[i].oobb.center.vz );
-        if( dcCollision_shapesCollide(&bf->shapes[i], shape) )
+        if( dcCollision_shapesCollide(&bf->shapes[i], shape, DebugRenderer,camera) )
         {
             return 1;
         }
@@ -145,7 +218,7 @@ int dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape )
     return 0;
 }
 
-int dcCollision_shapesCollide(SDC_Shape* shapeA, SDC_Shape* shapeB)
+int dcCollision_shapesCollide(SDC_Shape* shapeA, SDC_Shape* shapeB, SDC_Render* DebugRenderer, SDC_Camera* camera)
 {
     // int swap = shapeA->shapeType > shapeB->shapeType;
     // if(swap)
@@ -186,6 +259,7 @@ int dcCollision_shapesCollide(SDC_Shape* shapeA, SDC_Shape* shapeB)
             
             RotMatrix(&invRot, &m );
             TransMatrix( &m, &invTrans );
+            //DrawOOBBDebug(&shapeA->oobb,DebugRenderer,camera);
             return dcCollision_SphereBOXOverlap(&shapeA->oobb.halfSize, &m, &shapeB->sphere.center, shapeB->sphere.radius) < 0;
         }
         case ST_SPHERE:
@@ -196,4 +270,6 @@ int dcCollision_shapesCollide(SDC_Shape* shapeA, SDC_Shape* shapeB)
 
     return 0;
 }
+
+
 
