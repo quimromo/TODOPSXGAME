@@ -15,12 +15,9 @@
 #include "dcMisc.h"
 
 #include "tdGameplay.h"
-<<<<<<< HEAD
 #include "riverGameMode.h"
 #include "scenes/LVL_TestScene.h"
-=======
 #include "scenes/LVL_Lonchas.h"
->>>>>>> ad738f081aa37a0ff2a1a20fec9003876b3eb427
 
 #define CUBESIZE 196 
 
@@ -193,14 +190,7 @@ void DrawHouses(SDC_Render* render, SDC_Camera* camera)
 
     dcCamera_SetCameraPosition(camera, distanceX, distanceY, distanceZ);
     dcCamera_LookAt(camera, &VECTOR_ZERO);
-<<<<<<< HEAD
-
-    int numActors = sizeof(levelData_LVL_TestScene) / sizeof(levelData_LVL_TestScene[0]);
-    DrawActorArray(levelData_LVL_TestScene, numActors, render, camera, 1);
-=======
-    
     DrawActorArray(levelData_LVL_Lonchas.actors, levelData_LVL_Lonchas.numActors, render, camera, 1);
->>>>>>> ad738f081aa37a0ff2a1a20fec9003876b3eb427
 }
 
 void HousesDrawFunction(tdGameMode* gameMode, SDC_Render* render)
