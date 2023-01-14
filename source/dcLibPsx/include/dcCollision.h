@@ -17,7 +17,7 @@ long dcCollision_RayBOXInteresct( VECTOR* rayOrigin, SVECTOR* rayDir, VECTOR* bo
 long dcCollision_SpheresOverlap( VECTOR* sphere1Center, VECTOR* sphere2center, long sphere1Radius, long sphere2Radius );
 
 long dcCollision_SphereAABBOverlap( VECTOR* boxHalfSize, VECTOR* boxCenter, VECTOR* sphereCenter, long sphereRadius );
-long dcCollision_SphereBOXOverlap( VECTOR* boxHalfSize, MATRIX* boxTransform,  VECTOR* sphereCenter, long sphereRadius );
+long dcCollision_SphereBOXOverlap( VECTOR* boxHalfSize, MATRIX* boxInvTransform,  VECTOR* sphereCenter, long sphereRadius );
 
 
 typedef enum
