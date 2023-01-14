@@ -1,4 +1,4 @@
 #pragma once
-#include "../tdGameplay.h"
+#include "tdGameplay.h"
 #include "lonchaBase.h"
 

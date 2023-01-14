@@ -6,6 +6,9 @@
 #include <libgpu.h>
 #include <libgs.h>
 
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 240
+
 typedef struct {
 
     int       width;

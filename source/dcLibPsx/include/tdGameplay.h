@@ -11,13 +11,15 @@ struct tdMesh;
 struct tdPhysicsData;
 struct tdBoundingBox;
 struct tdGameMode;
+struct SDC_Render;
 
+typedef void (*InitFunction)(struct tdGameMode* gameMode);
 typedef void (*UpdateLoopFunction)(struct tdGameMode*);
-typedef void (*DrawFunction)(struct tdGameMode*);
+typedef void (*DrawFunction)(struct tdGameMode*, SDC_Render* render);
 
 typedef struct tdGameMode{
     SDC_Camera* camera;
-    SDC_Render* render;
+    InitFunction initFunction;
     UpdateLoopFunction updateLoopFunction;
     DrawFunction drawFunction;
     char* name; 
