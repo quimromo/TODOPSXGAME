@@ -165,21 +165,13 @@ int main(void)
     for(int i = 0; i < levelData_LVL_Lonchas.numCollisions; ++i)
     {
         SDC_Shape shape;
-        // shape.shapeType = ST_OOBB;
-        // shape.oobb.center = levelData_LVL_Lonchas.collisions[i].center;
-        // shape.oobb.halfSize.vx = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vx);
-        // shape.oobb.halfSize.vy = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vy);
-        // shape.oobb.halfSize.vz = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vz);
-        // shape.oobb.rotation = levelData_LVL_Lonchas.collisions[i].rotation;
-        
-        shape.shapeType = ST_AABB;
-        shape.aabb.vmin.vx = levelData_LVL_Lonchas.collisions[i].center.vx - abs(levelData_LVL_Lonchas.collisions[i].halfSize.vx);
-        shape.aabb.vmin.vy = levelData_LVL_Lonchas.collisions[i].center.vy - abs(levelData_LVL_Lonchas.collisions[i].halfSize.vy);
-        shape.aabb.vmin.vz = levelData_LVL_Lonchas.collisions[i].center.vz - abs(levelData_LVL_Lonchas.collisions[i].halfSize.vz);
-         
-        shape.aabb.vmax.vx = levelData_LVL_Lonchas.collisions[i].center.vx + abs(levelData_LVL_Lonchas.collisions[i].halfSize.vx);
-        shape.aabb.vmax.vy = levelData_LVL_Lonchas.collisions[i].center.vy + abs(levelData_LVL_Lonchas.collisions[i].halfSize.vy);
-        shape.aabb.vmax.vz = levelData_LVL_Lonchas.collisions[i].center.vz + abs(levelData_LVL_Lonchas.collisions[i].halfSize.vz);
+        shape.shapeType = ST_OOBB;
+        shape.oobb.center = levelData_LVL_Lonchas.collisions[i].center;
+        shape.oobb.halfSize.vx = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vx);
+        shape.oobb.halfSize.vy = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vy);
+        shape.oobb.halfSize.vz = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vz);
+        shape.oobb.rotation = levelData_LVL_Lonchas.collisions[i].rotation;
+
 
         dcBF_addShape(&Broadphase, &shape);
 
