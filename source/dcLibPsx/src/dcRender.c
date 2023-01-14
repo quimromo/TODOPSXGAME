@@ -195,6 +195,69 @@ void dcRender_DrawSpriteBg(SDC_Render* render, SDC_Texture* texture, short x, sh
 #define CALC_WARP_Y(z, maxYoffset) (DC_LERP(0, (maxYoffset), DC_MUL((z), (z))))
 #define WARP_POLY_Y(p3, z, maxYOffset) { short yWarpOffset = CALC_WARP_Y(z, maxYOffset); p3->y0 += yWarpOffset; p3->y1 += yWarpOffset; p3->y2 += yWarpOffset; }
 
+typedef void (*VertexRenderFunction)(void* poly, SDC_Mesh3D* mesh, SDC_Render* render, u_short index0, u_short index1, u_short index2);
+
+void DrawPolyVertex(void* poly, SDC_Mesh3D* mesh, SDC_Render* render, u_short index0, u_short index1, u_short index2)
+{
+    u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
+    int orderingTableCount = render->orderingTableCount;
+    long p, otz, flg;
+    int nclip;
+
+    POLY_F3* polyF3 = (POLY_F3*)poly;
+    SetPolyF3(polyF3);
+    SDC_Vertex *vertexs = (SDC_Vertex *)mesh->vertexs;
+    nclip = RotAverageNclip3(&vertexs[index0].position, &vertexs[index1].position, &vertexs[index2].position,
+        (long *)&polyF3->x0, (long *)&polyF3->x1, (long *)&polyF3->x2, &p, &otz, &flg);
+    // setRGB0(polyF3, curr_color.r, curr_color.g, curr_color.b);
+
+    if (nclip <= 0) return;
+    if ((otz <= 0) || (otz >= orderingTableCount)) return;
+
+    addPrim(orderingTable[otz], polyF3);
+    _dcRender_IncPrimitive(render, sizeof(POLY_F3));
+}
+
+void DrawPolyVertexTextured(void* poly, SDC_Mesh3D* mesh, SDC_Render* render, u_short index0, u_short index1, u_short index2)
+{
+    u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
+    int orderingTableCount = render->orderingTableCount;
+    long p, otz, flg;
+    int nclip;
+
+    POLY_FT3* polyFT3 = (POLY_FT3*)poly;
+    SDC_VertexTextured *vertexs = (SDC_VertexTextured *)mesh->vertexs;
+
+    setPolyFT3(polyFT3);
+    // setRGB0(polyFT3, curr_color.r, curr_color.g, curr_color.b);
+    setUV3(polyFT3, vertexs[index0].u , vertexs[index0].v, vertexs[index1].u , vertexs[index1].v, vertexs[index2].u , vertexs[index2].v);
+    {
+        polyFT3->tpage = getTPage(mesh->textureData.mode, 0, mesh->textureData.prect.x, mesh->textureData.prect.y); /*texture page*/
+        polyFT3->clut = GetClut (mesh->textureData.crect.x, mesh->textureData.crect.y); /*texture CLUT*/
+    }
+
+    nclip = RotAverageNclip3(&vertexs[index0].position, &vertexs[index1].position, &vertexs[index2].position,
+                            (long *)&polyFT3->x0, (long *)&polyFT3->x1, (long *)&polyFT3->x2, &p, &otz, &flg);
+    if (nclip <= 0) return;
+    if ((otz <= 0) || (otz >= orderingTableCount)) return;
+
+    WARP_POLY_Y(polyFT3, otz, 64)
+    addPrim(&orderingTable[otz], polyFT3);
+
+    _dcRender_IncPrimitive(render, sizeof(POLY_FT3));
+}
+
+// TODO implement other functions if needed
+VertexRenderFunction vertexRenderFunctions[] = {
+    &DrawPolyVertex, //    POLIGON_VERTEX,
+    &DrawPolyVertex, //    POLIGON_VERTEX_COLOR,
+    &DrawPolyVertex, //    POLIGON_VERTEX_NORMAL,  //Gouraud-shaded
+    &DrawPolyVertex, //    POLIGON_VERTEX_COLOR_NORMAL,  //Gouraud-shaded
+    &DrawPolyVertexTextured, //    POLIGON_VERTEX_TEXTURED,
+    &DrawPolyVertex, //    POLIGON_VERTEX_TEXTURED_COLOR, //Gouraud-shaded
+    &DrawPolyVertex //    POLIGON_VERTEX_TEXTURED_NORMAL //Gouraud-shaded (TODO)
+};
+
 void dcRender_DrawMesh(SDC_Render* render,  SDC_Mesh3D* mesh, MATRIX* transform, SDC_DrawParams* drawParams) 
 {
     assert(render && mesh && transform);
@@ -208,7 +271,9 @@ void dcRender_DrawMesh(SDC_Render* render,  SDC_Mesh3D* mesh, MATRIX* transform,
 
     const u_short bLighting = drawParams && drawParams->bLighting;
     CVECTOR* color = drawParams && drawParams->bUseConstantColor ? &drawParams->constantColor : NULL;
-    
+
+    VertexRenderFunction renderFunction = vertexRenderFunctions[mesh->polygonVertexType];
+
     for (int i = 0; i < mesh->numIndices; i += 3) {               
         u_short index0 = mesh->indices[i];
         u_short index1 = mesh->indices[i+1];
@@ -222,6 +287,12 @@ void dcRender_DrawMesh(SDC_Render* render,  SDC_Mesh3D* mesh, MATRIX* transform,
         CVECTOR curr_color = {255, 255, 255};
         if(color) 
             curr_color = *color;
+
+        renderFunction(poly, mesh, render, index0, index1, index2);
+        continue;
+
+        ////////////////////////
+        /// We don't do these things below as they are slow
 
         switch(mesh->polygonVertexType)
         {
