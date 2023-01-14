@@ -2,11 +2,12 @@
 #include "tdGameplay.h"
 #include "dcMath.h"
 #include "TestTile.h"
-#include "assets/barkitu.h"
+#include "assets/td_VAPOR_hull.h"
 #include "LVL_Loncha_00.h"
 #include "LVL_Loncha_01.h"
 #include "LVL_Loncha_02.h"
 #include "LVL_Loncha_03.h"
+#include "tdConfig.h"
 #include <libetc.h>
 #include <stdio.h>
 
@@ -60,7 +61,23 @@ long MinSteering = 3;
 int PrevSteering = STEERING_NONE;
 
 int currentCinematicTime = 0;
-int totalCinematicDuration = 4096;
+int totalCinematicDuration = 2048;
+SVECTOR introCinematicPath[] = {
+    {0, 310, 1160},
+    {-740, 370, 340+1000},
+    {-740, 370, -840+1000},
+    {550, 370, -840+1000},
+    {550, 370, 510},
+    {0, 1000, 2000}
+};
+SVECTOR introCinematicLookAt[] = {
+    {0, 0, 1000},
+    {0, 0, 1000},
+    {0, 0, 1000},
+    {0, 0, 1000},
+    {0, 0, 0},
+    {0, 0, 0}
+};
 char bCinematicMode = 0;
 
 extern int bEpicDebugMode;
@@ -131,7 +148,7 @@ void riverInitScene(tdGameMode* gameMode)
     currentLoncha = GetNewLoncha();
     nextLoncha = GetNewLoncha();
 
-    Player.meshData.mesh = &barkitu_Mesh;
+    Player.meshData.mesh = &td_VAPOR_hull_Mesh;
     Player.meshData.texture_tim = _binary_assets_textures_texturaEpica_tim_start;
     SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded(Player.meshData.texture_tim);
     Player.meshData.mesh->textureData = *textureData;
@@ -145,6 +162,13 @@ void riverInitScene(tdGameMode* gameMode)
     Player.rotation.vy = 2000;
 
     Player.position.vz = 1000;
+
+    if(bIntroCinematicEnabled)
+    {
+        bCinematicMode = 1;
+        currentCinematicTime = 0;
+    }
+    
 }
 
 void updatePlayerImmunity()
@@ -241,6 +265,19 @@ void riverUpdateScene(tdGameMode* gameMode)
     }
 
     updatePlayer();
+
+    // Update cineamtic if needed
+    if(bCinematicMode)
+    {
+        currentCinematicTime += 32;
+        if(currentCinematicTime >= totalCinematicDuration)
+        {
+            // Prevent cinematic going over total duration
+            currentCinematicTime = totalCinematicDuration;
+            // Stop cinematic mode
+            bCinematicMode = 0;
+        }
+    }
 }
 
 void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
@@ -255,14 +292,34 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
 
     if(bCinematicMode)
     {
+        int numCinematicPoints = sizeof(introCinematicPath) / sizeof(introCinematicPath[0]);
+        int durationPerPointPath = totalCinematicDuration / (numCinematicPoints-1);
+        int currentPoint = currentCinematicTime / durationPerPointPath;
+        int deltaInPoint = currentCinematicTime % durationPerPointPath;
+        int scaler = 4096 / durationPerPointPath;
+        int finalDeltaInPoint = deltaInPoint * scaler;
 
+        int idx0 = currentPoint;
+        int idx1 = currentPoint + 1 >= numCinematicPoints ? currentPoint : currentPoint + 1;
+        
+        // Camera Position
+        SVECTOR p0 = introCinematicPath[idx0];
+        SVECTOR p1 = introCinematicPath[idx1];
+        VECTOR finalCameraPos = {DC_LERP(p0.vx,p1.vx, finalDeltaInPoint), DC_LERP(p0.vy,p1.vy, finalDeltaInPoint), DC_LERP(p0.vz,p1.vz, finalDeltaInPoint)};
+
+        // Camera Look at
+        SVECTOR l0 = introCinematicLookAt[idx0];
+        SVECTOR l1 = introCinematicLookAt[idx1];
+        VECTOR finalCameraLookAt = {DC_LERP(l0.vx,l1.vx, finalDeltaInPoint), DC_LERP(l0.vy,l1.vy, finalDeltaInPoint), DC_LERP(l0.vz,l1.vz, finalDeltaInPoint)};
+
+        dcCamera_SetCameraPosition(gameMode->camera, finalCameraPos.vx, finalCameraPos.vy, finalCameraPos.vz);
+        dcCamera_LookAt(gameMode->camera, &finalCameraLookAt);
     }
     else
     {
         dcCamera_SetCameraPosition(gameMode->camera, distanceX, distanceY, distanceZ);
         dcCamera_LookAt(gameMode->camera, &VECTOR_ZERO);
     }
-   
 
     VECTOR NextLonchaOffset = lonchaOffset;
     NextLonchaOffset.vz -= offsetToChangeLoncha;

@@ -14,6 +14,7 @@ SRCS = main.c \
 		dcLibPsx/src/dcMisc.c\
 		dcLibPsx/src/tdGameplay.c\
 		riverGameMode.c\
+		tdConfig.c\
 
 CPPFLAGS += -I../third_party/common
 CPPFLAGS += -I../third_party/psyq/include
