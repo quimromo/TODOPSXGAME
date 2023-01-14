@@ -1,7 +1,7 @@
 #ifndef TEST_TILE_H
 #define TEST_TILE_H
 
-#include "../tdGameplay.h"
+#include "tdGameplay.h"
 #include "Cube.h"
 
 tdActor levelData_TestTile[] =

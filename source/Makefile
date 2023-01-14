@@ -1,7 +1,7 @@
 TARGET = MAIN
 TYPE = ps-exe
 
-SRCS = main.c tdGameplay.c tileset.tim \
+SRCS = main.c tileset.tim \
 		../third_party/common/syscalls/printf.s \
 		../third_party/common/crt0/crt0.s \
 		dcLibPsx/src/dcMemory.c\
@@ -10,6 +10,8 @@ SRCS = main.c tdGameplay.c tileset.tim \
 		dcLibPsx/src/dcRender.c\
 		dcLibPsx/src/dcCollision.c\
 		dcLibPsx/src/dcMisc.c\
+		dcLibPsx/src/tdGameplay.c\
+		riverGameMode.c\
 
 CPPFLAGS += -I../third_party/common
 CPPFLAGS += -I../third_party/psyq/include

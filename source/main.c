@@ -15,8 +15,8 @@
 #include "dcMisc.h"
 
 #include "tdGameplay.h"
+#include "riverGameMode.h"
 #include "scenes/LVL_TestScene.h"
-#include "scenes/TestTile.h"
 
 #define CUBESIZE 196 
 
@@ -149,12 +149,12 @@ void adjustCamera(void)
     dcCamera_ApplyCameraTransform(&camera, &transform, &MVP);
 }
 
-void drawScene(tdGameMode* gameMode)
+void drawScene(tdGameMode* gameMode, SDC_Render* render)
 {
     FntPrint("Super TODO Game\n");
 
     // Draw the axis
-    dcMisc_DrawAxis(gameMode->render, gameMode->camera);
+    dcMisc_DrawAxis(render, gameMode->camera);
 
     // Draw terrain
     MATRIX terrainMVP = {0};
@@ -165,15 +165,15 @@ void drawScene(tdGameMode* gameMode)
     dcCamera_ApplyCameraTransform(gameMode->camera, &terrainMVP, &terrainMVP);
     SDC_DrawParams terrainParams = { 0 };
 
-    dcRender_DrawMesh(&render, terrainMesh, &terrainMVP, &terrainParams );
+    dcRender_DrawMesh(render, terrainMesh, &terrainMVP, &terrainParams );
     
     // Draw the cube
-    dcRender_DrawMesh(&render, &piramidMesh, &MVP, &drawParams );
+    dcRender_DrawMesh(render, &piramidMesh, &MVP, &drawParams );
     
     // Draw a line along the cube's movement direction
     SVECTOR cubeCenter = {0};
     SVECTOR frontPoint = {0, 0, CUBESIZE << 2};
-    dcRender_DrawLine(&render, &cubeCenter, &frontPoint, &MVP, &drawParams.constantColor, 4 );
+    dcRender_DrawLine(render, &cubeCenter, &frontPoint, &MVP, &drawParams.constantColor, 4 );
 }
 
 
@@ -190,33 +190,37 @@ void DrawHouses(SDC_Render* render, SDC_Camera* camera)
     dcCamera_SetCameraPosition(camera, distanceX, distanceY, distanceZ);
     dcCamera_LookAt(camera, &VECTOR_ZERO);
 
-    int numActors = sizeof(levelData_TestTile) / sizeof(levelData_TestTile[0]);
-    DrawActorArray(levelData_TestTile, numActors, render, camera, 1);
+    int numActors = sizeof(levelData_LVL_TestScene) / sizeof(levelData_LVL_TestScene[0]);
+    DrawActorArray(levelData_LVL_TestScene, numActors, render, camera, 1);
 }
 
-void HousesDrawFunction(tdGameMode* gameMode)
+void HousesDrawFunction(tdGameMode* gameMode, SDC_Render* render)
 {
-    DrawHouses(gameMode->render, gameMode->camera);
+    DrawHouses(render, gameMode->camera);
 }
 
 void HousesUpdateLoop(tdGameMode* gameMode)
 {
-    int numActors = sizeof(levelData_TestTile) / sizeof(levelData_TestTile[0]);
-    for (int i = 0; i < numActors; ++i)
-    {
-        levelData_TestTile[i].position.vz += speed;
-    }
+
 }
 
-void SceneDrawFunction(tdGameMode* gameMode)
+void SceneDrawFunction(tdGameMode* gameMode, SDC_Render* render)
 {
     adjustCamera();
-    drawScene(gameMode);
+    drawScene(gameMode, render);
 }
 
 void SceneUpdateLoop(tdGameMode* gameMode)
 {
     processInput();
+}
+
+void InitGameMode(tdGameMode* gameMode)
+{
+    if(gameMode->initFunction)
+    {
+        gameMode->initFunction(gameMode);
+    }
 }
 
 void UpdateGameMode(tdGameMode* gameMode)
@@ -227,11 +231,11 @@ void UpdateGameMode(tdGameMode* gameMode)
     }
 }
 
-void DrawGameMode(tdGameMode* gameMode)
+void DrawGameMode(tdGameMode* gameMode, SDC_Render* render)
 {
     if(gameMode->drawFunction)
     {
-        gameMode->drawFunction(gameMode);
+        gameMode->drawFunction(gameMode, render);
     }
 }
 
@@ -270,19 +274,20 @@ int main(void)
 
     tdGameMode housesGameMode;
     housesGameMode.camera = &camera;
-    housesGameMode.render = &render;
+    housesGameMode.initFunction = NULL;
     housesGameMode.updateLoopFunction = &HousesUpdateLoop;
     housesGameMode.drawFunction = &HousesDrawFunction;
 
     tdGameMode sceneGameMode;
     sceneGameMode.camera = &camera;
-    sceneGameMode.render = &render;
+    sceneGameMode.initFunction = NULL;
     sceneGameMode.updateLoopFunction = &SceneUpdateLoop;
     sceneGameMode.drawFunction = &SceneDrawFunction;
 
-    tdGameMode* gameModes[] = { &sceneGameMode, &housesGameMode};
-    u_long gameModeIdx = 1;
+    tdGameMode* gameModes[] = { &riverGameMode, &sceneGameMode, &housesGameMode};
+    u_long gameModeIdx = 0;
     u_long prevStartState = 0;
+    InitGameMode(gameModes[gameModeIdx]);
 
     while (1) {
 
@@ -297,12 +302,13 @@ int main(void)
             {
                 gameModeIdx = 0;
             }
+            InitGameMode(gameModes[gameModeIdx]);
         }
         prevStartState = startState;
 
         // Update and draw the current game mode
         UpdateGameMode(gameModes[gameModeIdx]);
-        DrawGameMode(gameModes[gameModeIdx]);
+        DrawGameMode(gameModes[gameModeIdx], &render);
 
         dcRender_SwapBuffers(&render);
     }

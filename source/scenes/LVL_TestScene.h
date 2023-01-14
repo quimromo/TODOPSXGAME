@@ -1,5 +1,5 @@
 #pragma once
-#include "../tdGameplay.h"
+#include "tdGameplay.h"
 #include "CasaDelCampo.h"
 
 tdActor levelData_LVL_TestScene[] = {
