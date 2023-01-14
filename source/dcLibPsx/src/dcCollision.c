@@ -64,29 +64,24 @@ long dcCollision_SphereAABBOverlap( VECTOR* boxHalfSize, VECTOR* boxCenter, VECT
     VECTOR maxP0 = { DC_MAX(p.vx, 0), DC_MAX(p.vy, 0), DC_MAX(p.vz, 0) };
     long dist = DC_LENGTH(&maxP0) + DC_MIN( DC_MAX(p.vx, DC_MAX(p.vy, p.vz)), 0 ) - sphereRadius;
 
-
-    printf("Sphere( p: %d, %d, %d r: %d ) collides with AABB( p: %d, %d, %d hs: %d %d %d) -> %s\n",
-        sphereCenter->vx, sphereCenter->vy, sphereCenter->vz, sphereRadius,
-        boxCenter->vx, boxCenter->vy, boxCenter->vz, boxHalfSize->vx, boxHalfSize->vy, boxHalfSize->vz,
-        dist < 0 ? "YES" : "NO"
-    );
+    // printf("Sphere( p: %d, %d, %d r: %d ) collides with AABB( p: %d, %d, %d hs: %d %d %d) -> %s\n",
+    //     sphereCenter->vx, sphereCenter->vy, sphereCenter->vz, sphereRadius,
+    //     boxCenter->vx, boxCenter->vy, boxCenter->vz, boxHalfSize->vx, boxHalfSize->vy, boxHalfSize->vz,
+    //     dist < 0 ? "YES" : "NO"
+    // );
 
     return dist;
-
-    // float sdBox( vec3 p, vec3 b )
-    // {
-    // vec3 q = abs(p) - b;
-    // return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
-    // }
 }
 
-long dcCollision_SphereBOXOverlap( VECTOR* boxHalfSize, MATRIX* boxTransform,  VECTOR* sphereCenter, long sphereRadius )
+long dcCollision_SphereBOXOverlap( VECTOR* boxHalfSize, MATRIX* boxInvTransform,  VECTOR* sphereCenter, long sphereRadius )
 {
     VECTOR transformedSphereCenter;
-    //ApplyTransposeMatrixLV(boxTransform, sphereCenter, &transformedSphereCenter);
-    ApplyMatrixLV(boxTransform, sphereCenter, &transformedSphereCenter );
+    SetRotMatrix(boxInvTransform);
+    SetTransMatrix(boxInvTransform);
+    long flag;
+    TransRot_32(sphereCenter, &transformedSphereCenter, &flag);
 
-    VECTOR boxCenter = {0};
+    VECTOR boxCenter = { 0 };
     return dcCollision_SphereAABBOverlap(boxHalfSize, &boxCenter, &transformedSphereCenter, sphereRadius );
 
 }
@@ -143,7 +138,7 @@ int dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape )
 {
     for(int i = 0; i < bf->numShapes; ++i)
     {
-        printf("%d - OOBB at: ( %d, %d, %d )\n", i, bf->shapes[i].oobb.center.vx, bf->shapes[i].oobb.center.vy, bf->shapes[i].oobb.center.vz );
+        //printf("%d - OOBB at: ( %d, %d, %d )\n", i, bf->shapes[i].oobb.center.vx, bf->shapes[i].oobb.center.vy, bf->shapes[i].oobb.center.vz );
         if( dcCollision_shapesCollide(&bf->shapes[i], shape) )
         {
             return 1;
@@ -188,11 +183,10 @@ int dcCollision_shapesCollide(SDC_Shape* shapeA, SDC_Shape* shapeB)
         case ST_OOBB:
         {
             MATRIX m = {0};
-            //SVECTOR invRot = {-shapeA->oobb.rotation.vx, -shapeA->oobb.rotation.vy, -shapeA->oobb.rotation.vz};
+            SVECTOR invRot = {-shapeA->oobb.rotation.vx, -shapeA->oobb.rotation.vy, -shapeA->oobb.rotation.vz};
             VECTOR invTrans = {-shapeA->oobb.center.vx, -shapeA->oobb.center.vy, -shapeA->oobb.center.vz};
             
-            SVECTOR zeroRot = {0};
-            RotMatrix(&zeroRot, &m );
+            RotMatrix(&invRot, &m );
             TransMatrix( &m, &invTrans );
             return dcCollision_SphereBOXOverlap(&shapeA->oobb.halfSize, &m, &shapeB->sphere.center, shapeB->sphere.radius) < 0;
         }
