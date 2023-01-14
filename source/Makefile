@@ -1,7 +1,7 @@
 TARGET = MAIN
 TYPE = ps-exe
 
-SRCS = main.c tileset.tim ./assets/textures/TilesetDelCampo.tim ./assets/textures/waterTilesetSmall.tim \
+SRCS = main.c tileset.tim ./assets/textures/waterTilesetSmall.tim ./assets/textures/texturaEpica.tim \
 		../third_party/common/syscalls/printf.s \
 		../third_party/common/crt0/crt0.s \
 		dcLibPsx/src/dcMemory.c\

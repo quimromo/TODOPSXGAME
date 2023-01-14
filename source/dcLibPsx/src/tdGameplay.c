@@ -4,19 +4,46 @@
 #include <stdio.h>
 #include "dcCamera.h"
 #include "dcRender.h"
+#include "dcMath.h"
 
 
 void GetActorTransform(tdActor* actor, MATRIX* outTransform)
 {
+    GetActorTransformOffset(actor, VECTOR_ZERO, outTransform);
+}
+
+void DrawActor(tdActor* actor, SDC_Render* render, SDC_Camera* camera)
+{
+    DrawActorOffset(actor, VECTOR_ZERO, render, camera);
+}
+
+void DrawActorBoundingBox(tdActor* actor, SDC_Render* render,  SDC_Camera* camera)
+{
+    DrawActorBoundingBoxOffset(actor, VECTOR_ZERO, render, camera);
+}
+
+void DrawActorArray(tdActor actorArray[],int numActors, SDC_Render* render, SDC_Camera* camera, int bDrawBoundingBoxes)
+{
+    DrawActorArrayOffset(actorArray, numActors, VECTOR_ZERO, render, camera, bDrawBoundingBoxes);
+}
+
+
+void GetActorTransformOffset(tdActor* actor, VECTOR offset, MATRIX* outTransform)
+{
+    VECTOR finalPos = actor->position;
+    finalPos.vx += offset.vx;
+    finalPos.vy += offset.vy;
+    finalPos.vz += offset.vz;
     RotMatrix(&actor->rotation, outTransform);
-    TransMatrix(outTransform, &actor->position);
+    TransMatrix(outTransform, &finalPos);
     ScaleMatrix(outTransform, &actor->scale);
 }
-void DrawActor(tdActor* actor, SDC_Render* render, SDC_Camera* camera)
+
+void DrawActorOffset(tdActor* actor, VECTOR offset, SDC_Render* render, SDC_Camera* camera)
 {
     // Actor transform
     MATRIX transform;
-    GetActorTransform(actor, &transform);
+    GetActorTransformOffset(actor, offset, &transform);
     dcCamera_ApplyCameraTransform(camera, &transform, &transform);
 
     // Actor draw params
@@ -29,14 +56,27 @@ void DrawActor(tdActor* actor, SDC_Render* render, SDC_Camera* camera)
     drawParams.constantColor = drawColor;
 
     // Draw the actual actor
-    dcRender_DrawMesh(render, actor->meshData.mesh, &transform, &drawParams);  
+    dcRender_DrawMesh(render, actor->meshData.mesh, &transform, &drawParams);
 }
 
-void DrawActorBoundingBox(tdActor* actor, SDC_Render* render,  SDC_Camera* camera)
+void DrawActorArrayOffset(tdActor actorArray[], int numActors, VECTOR offset, SDC_Render* render, SDC_Camera* camera, int bDrawBoundingBoxes)
+{
+    for (int i = 0; i < numActors; ++i)
+    {
+        tdActor actorToDraw = actorArray[i];
+        DrawActorOffset(&actorToDraw, offset, render, camera);
+        if(bDrawBoundingBoxes)
+        {
+            DrawActorBoundingBoxOffset(&actorToDraw, offset, render, camera);
+        }
+    }
+}
+
+void DrawActorBoundingBoxOffset(tdActor* actor, VECTOR offset, SDC_Render* render,  SDC_Camera* camera)
 {
     // Actor transform
     MATRIX transform;
-    GetActorTransform(actor, &transform);
+    GetActorTransformOffset(actor, offset, &transform);
     dcCamera_ApplyCameraTransform(camera, &transform, &transform);
 
     CVECTOR drawColor = {255,60,60};
@@ -70,19 +110,6 @@ void DrawActorBoundingBox(tdActor* actor, SDC_Render* render,  SDC_Camera* camer
 
     dcRender_DrawLine(render, &v100, &v101, &transform, &drawColor, 2);
     dcRender_DrawLine(render, &v100, &v110, &transform, &drawColor, 2);
-}
-
-void DrawActorArray(tdActor actorArray[],int numActors, SDC_Render* render, SDC_Camera* camera, int bDrawBoundingBoxes)
-{
-    for(int i =0; i<numActors; ++i)
-    {
-        tdActor actorToDraw = actorArray[i];
-        DrawActor(&actorToDraw, render, camera);
-        if(bDrawBoundingBoxes)
-        {
-            DrawActorBoundingBox(&actorToDraw, render, camera);
-        }
-    }
 }
 
 void InitializeActorBoundingBoxBasedOnMesh(tdActor* actor)

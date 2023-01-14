@@ -3,6 +3,8 @@
 #include "dcMath.h"
 #include "TestTile.h"
 
+extern tdLoncha levelData_LVL_Lonchas;
+
 SDC_Camera riverCamera;
 
 tdGameMode riverGameMode = 
@@ -13,18 +15,41 @@ tdGameMode riverGameMode =
     .drawFunction = &riverDrawScene
 };
 
+
+tdLoncha currentLoncha;
+tdLoncha nextLoncha;
+
+VECTOR lonchaOffset = {0};
+
+int scrollSpeed = 9;
+int offsetToChangeLoncha = 8900;
+
+tdLoncha GetNewLoncha(void)
+{
+    tdLoncha newLoncha = levelData_LVL_Lonchas;
+    return newLoncha;
+}
+
 void riverInitScene(tdGameMode* gameMode)
 {
     dcCamera_SetScreenResolution(gameMode->camera, SCREEN_WIDTH, SCREEN_HEIGHT);
+    lonchaOffset = VECTOR_ZERO;
+    lonchaOffset.vz -= offsetToChangeLoncha >> 2; // pivot is in the center, so we offset half the mesh
+    currentLoncha = GetNewLoncha();
+    nextLoncha = GetNewLoncha();
 }
 
 void riverUpdateScene(tdGameMode* gameMode)
 {
-    int numActors = sizeof(levelData_TestTile) / sizeof(levelData_TestTile[0]);
-    for (int i = 0; i < numActors; ++i)
+    int prevLonchaIdx = (offsetToChangeLoncha >> 2) + lonchaOffset.vz / offsetToChangeLoncha;
+    lonchaOffset.vz += scrollSpeed;
+    int newLonchaIdx = (offsetToChangeLoncha >> 2) + lonchaOffset.vz / offsetToChangeLoncha;
+
+    if (prevLonchaIdx != newLonchaIdx)
     {
-        int speed = 3;
-        levelData_TestTile[i].position.vz += speed;
+        currentLoncha = nextLoncha;
+        nextLoncha = GetNewLoncha();
+        lonchaOffset.vz -= offsetToChangeLoncha;
     }
 }
 
@@ -41,6 +66,10 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     dcCamera_SetCameraPosition(gameMode->camera, distanceX, distanceY, distanceZ);
     dcCamera_LookAt(gameMode->camera, &VECTOR_ZERO);
 
-    int numActors = sizeof(levelData_TestTile) / sizeof(levelData_TestTile[0]);
-    DrawActorArray(levelData_TestTile, numActors, render, gameMode->camera, 1);
+    VECTOR NextLonchaOffset = lonchaOffset;
+    NextLonchaOffset.vz -= offsetToChangeLoncha;
+
+    DrawActorArrayOffset(currentLoncha.actors, currentLoncha.numActors, lonchaOffset, render, gameMode->camera, 1);
+    DrawActorArrayOffset(nextLoncha.actors, nextLoncha.numActors, NextLonchaOffset, render, gameMode->camera, 1);
+    //DrawActorArrayOffset(levelData_TestTile, 2, lonchaOffset, render, gameMode->camera, 0);
 }

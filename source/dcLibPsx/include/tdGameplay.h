@@ -52,17 +52,25 @@ typedef struct tdActor{
     tdMesh meshData;
 } tdActor;
 
-typedef struct tdCollisionPlane
+typedef struct SDC_OOBB
 {
-
-} tdCollisionPlane;
+    VECTOR center;
+    VECTOR halfSize;
+    SVECTOR rotation;
+} SDC_OOBB;
 
 typedef struct tdLoncha{
     tdActor* actors;
     int numActors;
-    tdCollisionPlane* collisions;
+    SDC_OOBB* collisions;
     int numCollisions;
 } tdLoncha;
+
+typedef struct tdTIMDataHandler{
+    u_long* tim_identifier;
+    TIM_IMAGE timImage;
+    SDC_Texture textureData;
+}tdTIMDataHandler;
 
 // Draws and actor using a camera
 void DrawActor(tdActor* actor, SDC_Render* render,  SDC_Camera* camera);
@@ -75,3 +83,8 @@ void InitializeActorBoundingBoxBasedOnMesh(tdActor* actor);
 void GetActorTransform(tdActor* actor, MATRIX* outTransform);
 // Draws an array of actors
 void DrawActorArray(tdActor actorArray[], int numActors, SDC_Render* render, SDC_Camera* camera, int bDrawBoundingBox);
+
+void GetActorTransformOffset(tdActor* actor, VECTOR offset, MATRIX* outTransform);
+void DrawActorOffset(tdActor* actor, VECTOR offset, SDC_Render* render, SDC_Camera* camera);
+void DrawActorArrayOffset(tdActor actorArray[], int numActors, VECTOR offset, SDC_Render* render, SDC_Camera* camera, int bDrawBoundingBox);
+void DrawActorBoundingBoxOffset(tdActor* actor, VECTOR offset, SDC_Render* render,  SDC_Camera* camera);
