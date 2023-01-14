@@ -48,19 +48,6 @@ SDC_Mesh3D* sphereMesh;
 
 SDC_Broadphase Broadphase;
 
-void DrawLoncha(tdLoncha* loncha, SDC_Render* render, SDC_Camera* camera)
-{
-    DrawActorArray(loncha->actors, loncha->numActors, render, camera, 0);
-}
-
-void DrawLonchaCollisions(tdLoncha* loncha, SDC_Render* render, SDC_Camera* camera)
-{
-    for (int i = 0; i < loncha->numCollisions; ++i)
-    {
-        DrawOOBBDebug(&loncha->collisions[i], render, camera);
-    }
-}
-
 void DrawHouses(SDC_Render* render, SDC_Camera* camera)
 {
     long cameraPosUnrealX = 0;
@@ -100,7 +87,8 @@ void DrawHouses(SDC_Render* render, SDC_Camera* camera)
     dcCamera_SetCameraPosition(camera, distanceX+cameraOffset.vx, distanceY+cameraOffset.vy, distanceZ+cameraOffset.vz);
     dcCamera_LookAt(camera, &cameraLookAt);
 
-    DrawLoncha(&levelData_LVL_Lonchas, render, camera);
+    VECTOR lonchaOffset = {0};
+    DrawLoncha(&levelData_LVL_Lonchas, lonchaOffset, render, camera);
     if(bEpicDebugMode)
     {
         MATRIX sphereTransform = {0};
@@ -125,7 +113,7 @@ void DrawHouses(SDC_Render* render, SDC_Camera* camera)
 
 
         dcRender_DrawMesh( render, sphereMesh, &sphereTransform, &drawParams);
-        DrawLonchaCollisions(&levelData_LVL_Lonchas, render, camera);
+        DrawLonchaCollisions(&levelData_LVL_Lonchas, lonchaOffset, render, camera);
     }
 }
 
@@ -134,21 +122,10 @@ void HousesDrawFunction(tdGameMode* gameMode, SDC_Render* render)
     DrawHouses(render, gameMode->camera);
 }
 
-int prevSelectState = 0;
+
 void HousesUpdateLoop(tdGameMode* gameMode)
 {
-    u_long padState = PadRead(0);
 
-    int currentSelectState = (_PAD(0,PADselect ) & padState );
-
-    if(!currentSelectState && prevSelectState)
-    {
-        bEpicDebugMode = bEpicDebugMode ? 0 : 1;
-    }
-
-    prevSelectState = currentSelectState;
-
-    
 }
 
 void InitGameMode(tdGameMode* gameMode)
@@ -255,6 +232,7 @@ int main(void)
     tdGameMode* gameModes[] = { &riverGameMode, &housesGameMode};
     u_long gameModeIdx = 0;
     u_long prevStartState = 0;
+    u_long prevSelectState = 0;
     InitGameMode(gameModes[gameModeIdx]);
 
     while (1)
@@ -274,6 +252,14 @@ int main(void)
             InitGameMode(gameModes[gameModeIdx]);
         }
         prevStartState = startState;
+
+        // Debug mode using select
+        int currentSelectState = (_PAD(0,PADselect ) & padState );
+        if(!currentSelectState && prevSelectState)
+        {
+            bEpicDebugMode = bEpicDebugMode ? 0 : 1;
+        }
+        prevSelectState = currentSelectState;
 
         // Update and draw the current game mode
         UpdateGameMode(gameModes[gameModeIdx]);

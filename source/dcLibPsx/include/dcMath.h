@@ -15,6 +15,7 @@
 
 extern VECTOR VECTOR_UP;
 extern VECTOR VECTOR_ZERO;
+extern SVECTOR SVECTOR_ZERO;
 
 #define DC_ONEREV DC_ONE // 360 degrees is represented as 1
 #define DC_HALFREV 2048
@@ -26,6 +27,7 @@ static long DC_MUL64(long v0, long v1);
 
 #define DC_MAX(a,b) (((a) > (b)) ? (a) : (b))
 #define DC_MIN(a,b) (((a) < (b)) ? (a) : (b))
+#define DC_ABS(a) (((a) < 0) ? (-a) : (a))
 #define DC_CLAMP(value, min, max)(DC_MIN(DC_MAX((value), (min)), (max)))
 #define DC_LERP(fixedA, fixedB, alpha)( DC_MUL64(fixedA, DC_ONE - (alpha)) + DC_MUL64(fixedB, alpha) )
 
