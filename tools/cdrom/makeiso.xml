@@ -158,10 +158,5 @@
 	</track>
 
 	-->
-	<track type="audio" source="audio/track01.wav"/>
-    <track type="audio" source="audio/track02.wav"/>
-    <track type="audio" source="audio/track03.wav"/>
-    <track type="audio" source="audio/track04.wav"/>
-    <track type="audio" source="audio/track05.wav"/>
 	
 </iso_project>
