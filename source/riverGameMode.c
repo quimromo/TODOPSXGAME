@@ -2,11 +2,12 @@
 #include "tdGameplay.h"
 #include "dcMath.h"
 #include "TestTile.h"
-#include "assets/barkitu.h"
+#include "assets/td_VAPOR_hull.h"
 #include "LVL_Loncha_00.h"
 #include "LVL_Loncha_01.h"
 #include "LVL_Loncha_02.h"
 #include "LVL_Loncha_03.h"
+#include "tdConfig.h"
 #include <libetc.h>
 #include <stdio.h>
 
@@ -51,16 +52,34 @@ int ImmunityDuration = 0;
 
 // Movement Variables
 int scrollSpeed = 65;
-long SteeringStep = 8;
-long FrictionStep = 4;
+int maxScrollSpeed = 300;
+int scrollSpeedIncreasePerLoncha = 60;
+long SteeringStep = 100;
+long FrictionStep = 70;
 
 short MaxRotationAngle = 30;
-long MaxSteering = 40;
-long MinSteering = 3;
+long MaxSteering = 300;
+long MinSteering = 40;
 int PrevSteering = STEERING_NONE;
 
 int currentCinematicTime = 0;
-int totalCinematicDuration = 4096;
+int totalCinematicDuration = 2048;
+SVECTOR introCinematicPath[] = {
+    {0, 310, 1160},
+    {-740, 370, 340+1000},
+    {-740, 370, -840+1000},
+    {550, 370, -840+1000},
+    {550, 370, 510},
+    {0, 1000, 2000}
+};
+SVECTOR introCinematicLookAt[] = {
+    {0, 0, 1000},
+    {0, 0, 1000},
+    {0, 0, 1000},
+    {0, 0, 1000},
+    {0, 0, 0},
+    {0, 0, 0}
+};
 char bCinematicMode = 0;
 
 extern int bEpicDebugMode;
@@ -74,6 +93,12 @@ tdLoncha* lonchasList[] = {
 };
 
 int idInLonchasList = 0;
+
+int cameraLagTime = 100;
+SVECTOR targetCameraPosOffset = {0};
+SVECTOR cameraPosOffset = {0};
+SVECTOR targetCameraLookAtOffset = {0};
+SVECTOR cameraLookAtOffset = {0};
 
 // Loads texture data an computes meshes bounding boxes
 void InitializeLonchas()
@@ -94,6 +119,14 @@ void InitializeLonchas()
     }
 }
 
+void IncrementScrollSpeed()
+{
+    scrollSpeed += scrollSpeedIncreasePerLoncha;
+    if(scrollSpeed > maxScrollSpeed)
+    {
+        scrollSpeed = maxScrollSpeed;
+    }
+}
 void IncrementLonchasListId()
 {
     idInLonchasList++;
@@ -108,6 +141,7 @@ tdLoncha* GetNewLoncha(void)
 {
     tdLoncha* newLoncha = lonchasList[idInLonchasList];
     IncrementLonchasListId();
+    
     return newLoncha;
 }
 
@@ -131,7 +165,7 @@ void riverInitScene(tdGameMode* gameMode)
     currentLoncha = GetNewLoncha();
     nextLoncha = GetNewLoncha();
 
-    Player.meshData.mesh = &barkitu_Mesh;
+    Player.meshData.mesh = &td_VAPOR_hull_Mesh;
     Player.meshData.texture_tim = _binary_assets_textures_texturaEpica_tim_start;
     SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded(Player.meshData.texture_tim);
     Player.meshData.mesh->textureData = *textureData;
@@ -145,6 +179,13 @@ void riverInitScene(tdGameMode* gameMode)
     Player.rotation.vy = 2000;
 
     Player.position.vz = 1000;
+
+    if(bIntroCinematicEnabled)
+    {
+        bCinematicMode = 1;
+        currentCinematicTime = 0;
+    }
+    
 }
 
 void updatePlayerImmunity()
@@ -218,11 +259,40 @@ void updatePlayer()
     }
 
     //Update rotation
-    Player.rotation.vy = -CurrentSteering * 7;
+    Player.rotation.vy = (-CurrentSteering * 400 ) / MaxSteering;
 
     Player.position.vx += CurrentSteering;
 
     updatePlayerImmunity();
+}
+
+void updateCamera()
+{
+    targetCameraPosOffset.vx = Player.position.vx;
+    targetCameraLookAtOffset.vx = Player.position.vx;
+
+    cameraPosOffset.vx = DC_LERP(cameraPosOffset.vx, targetCameraPosOffset.vx, 512);
+    cameraPosOffset.vy = DC_LERP(cameraPosOffset.vy, targetCameraPosOffset.vy, 512);
+    cameraPosOffset.vz = DC_LERP(cameraPosOffset.vz, targetCameraPosOffset.vz, 512);
+    cameraLookAtOffset.vx = DC_LERP(cameraLookAtOffset.vx, targetCameraLookAtOffset.vx, 512);
+    cameraLookAtOffset.vy = DC_LERP(cameraLookAtOffset.vy, targetCameraLookAtOffset.vy, 512);
+    cameraLookAtOffset.vz = DC_LERP(cameraLookAtOffset.vz, targetCameraLookAtOffset.vz, 512);
+}
+
+void updateCinematic()
+{
+
+    if(bCinematicMode)
+    {
+        currentCinematicTime += 32;
+        if(currentCinematicTime >= totalCinematicDuration)
+        {
+            // Prevent cinematic going over total duration
+            currentCinematicTime = totalCinematicDuration;
+            // Stop cinematic mode
+            bCinematicMode = 0;
+        }
+    }
 }
 
 void riverUpdateScene(tdGameMode* gameMode)
@@ -238,9 +308,13 @@ void riverUpdateScene(tdGameMode* gameMode)
         currentLoncha = nextLoncha;
         nextLoncha = GetNewLoncha();
         lonchaOffset.vz -= offsetToChangeLoncha;
+        IncrementScrollSpeed();
     }
 
     updatePlayer();
+    updateCamera();
+     // Update cineamtic if needed
+    updateCinematic();
 }
 
 void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
@@ -255,14 +329,36 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
 
     if(bCinematicMode)
     {
+        int numCinematicPoints = sizeof(introCinematicPath) / sizeof(introCinematicPath[0]);
+        int durationPerPointPath = totalCinematicDuration / (numCinematicPoints-1);
+        int currentPoint = currentCinematicTime / durationPerPointPath;
+        int deltaInPoint = currentCinematicTime % durationPerPointPath;
+        int scaler = 4096 / durationPerPointPath;
+        int finalDeltaInPoint = deltaInPoint * scaler;
 
+        int idx0 = currentPoint;
+        int idx1 = currentPoint + 1 >= numCinematicPoints ? currentPoint : currentPoint + 1;
+        
+        // Camera Position
+        SVECTOR p0 = introCinematicPath[idx0];
+        SVECTOR p1 = introCinematicPath[idx1];
+        VECTOR finalCameraPos = {DC_LERP(p0.vx,p1.vx, finalDeltaInPoint), DC_LERP(p0.vy,p1.vy, finalDeltaInPoint), DC_LERP(p0.vz,p1.vz, finalDeltaInPoint)};
+
+        // Camera Look at
+        SVECTOR l0 = introCinematicLookAt[idx0];
+        SVECTOR l1 = introCinematicLookAt[idx1];
+        VECTOR finalCameraLookAt = {DC_LERP(l0.vx,l1.vx, finalDeltaInPoint), DC_LERP(l0.vy,l1.vy, finalDeltaInPoint), DC_LERP(l0.vz,l1.vz, finalDeltaInPoint)};
+
+        dcCamera_SetCameraPosition(gameMode->camera, finalCameraPos.vx, finalCameraPos.vy, finalCameraPos.vz);
+        dcCamera_LookAt(gameMode->camera, &finalCameraLookAt);
     }
     else
     {
-        dcCamera_SetCameraPosition(gameMode->camera, distanceX, distanceY, distanceZ);
-        dcCamera_LookAt(gameMode->camera, &VECTOR_ZERO);
+        VECTOR cameraPos = {distanceX + cameraPosOffset.vx, distanceY + cameraPosOffset.vy, distanceZ + cameraPosOffset.vz};
+        VECTOR cameraLookAt = {cameraLookAtOffset.vx, cameraLookAtOffset.vy, cameraLookAtOffset.vz};
+        dcCamera_SetCameraPosition(gameMode->camera, cameraPos.vx, cameraPos.vy, cameraPos.vz);
+        dcCamera_LookAt(gameMode->camera, &cameraLookAt);
     }
-   
 
     VECTOR NextLonchaOffset = lonchaOffset;
     NextLonchaOffset.vz -= offsetToChangeLoncha;

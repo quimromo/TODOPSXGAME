@@ -1,6 +1,12 @@
 {
     "files.associations": {
         "MAIN.C": "cpp",
-        "lvl_loncha_02.h": "c"
+        "lvl_loncha_02.h": "c",
+        "barkitu.h": "c",
+        "td_character_vapor_test.h": "c",
+        "testtile.h": "c",
+        "lvl_loncha_00.h": "c",
+        "td_vapor_tresivint_hull.h": "c",
+        "td_vapor_hull.h": "c"
     }
 }
