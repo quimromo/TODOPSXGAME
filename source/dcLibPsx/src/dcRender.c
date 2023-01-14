@@ -346,9 +346,9 @@ void dcRender_DrawMesh(SDC_Render* render,  SDC_Mesh3D* mesh, MATRIX* transform,
                 SetPolyFT3(polyFT3);
                 setRGB0(polyFT3, curr_color.r, curr_color.g, curr_color.b);
                 setUV3(polyFT3, vertexs[index0].u , vertexs[index0].v, vertexs[index1].u , vertexs[index1].v, vertexs[index2].u , vertexs[index2].v);
-                if(drawParams && drawParams->tim) {
-                    polyFT3->tpage = getTPage(drawParams->tim->mode, 0, drawParams->tim->prect->x, drawParams->tim->prect->y); /*texture page*/
-                    polyFT3->clut = GetClut (drawParams->tim->crect->x, drawParams->tim->crect->y); /*texture CLUT*/
+                {
+                    polyFT3->tpage = getTPage(mesh->textureData.mode, 0, mesh->textureData.prect.x, mesh->textureData.prect.y); /*texture page*/
+                    polyFT3->clut = GetClut (mesh->textureData.crect.x, mesh->textureData.crect.y); /*texture CLUT*/
                 }
 
                 nclip = RotAverageNclip3(&vertexs[index0].position, &vertexs[index1].position, &vertexs[index2].position,

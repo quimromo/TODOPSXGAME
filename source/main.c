@@ -36,12 +36,21 @@ long distance = 800;
 long cameraHeight = 600;
 
 tdGameMode* currentGameMode = NULL;
+tdTIMDataHandler timData[10];
 
-extern unsigned long _binary_tileset_tim_start[];
-extern unsigned long _binary_assets_textures_waterTileset_tim_start[];
+int bDrawHouses = 0;
 
 SVECTOR cameraOffset = {0, 0, 0};
 
+void DrawLoncha(tdLoncha* loncha, SDC_Render* render, SDC_Camera* camera)
+{
+    // DrawActorArray(&loncha->actors, render, camera);
+}
+
+void DrawLonchaCollisions(tdLoncha* loncha, SDC_Render* render, SDC_Camera* camera)
+{
+
+}
 
 void DrawHouses(SDC_Render* render, SDC_Camera* camera)
 {
@@ -136,13 +145,31 @@ int main(void)
     RotMatrix(&rotation, &transform);
     TransMatrix(&transform, &translation);
 
-
-    TIM_IMAGE tim_tileset;
-    dcRender_LoadTexture(&tim_tileset, _binary_assets_textures_waterTilesetSmall_tim_start);
-
     for(int i = 0; i<levelData_LVL_Lonchas.numActors; ++i)
     {
-        levelData_LVL_Lonchas.actors[i].meshData.mesh->tim = &tim_tileset;
+        int timDataID = 0;
+        int bInitialized = 0;
+        for(int j=0;j<10;++j)
+        {
+            if(timData[j].tim_identifier == levelData_LVL_Lonchas.actors[i].meshData.texture_tim )
+            {
+                timDataID = j;
+                bInitialized = 1;
+                break;
+            }
+        }
+
+        if(!bInitialized)
+        {
+            TIM_IMAGE timImage;
+            dcRender_LoadTexture(&timImage, levelData_LVL_Lonchas.actors[i].meshData.texture_tim);
+            timData[timDataID].textureData.mode = timImage.mode;
+            timData[timDataID].textureData.crect = *timImage.crect;
+            timData[timDataID].textureData.prect = *timImage.prect;
+            timData[timDataID].tim_identifier = levelData_LVL_Lonchas.actors[i].meshData.texture_tim;
+        }
+
+        levelData_LVL_Lonchas.actors[i].meshData.mesh->textureData = timData[timDataID].textureData;
         InitializeActorBoundingBoxBasedOnMesh(&levelData_LVL_Lonchas.actors[i]);
     }
 

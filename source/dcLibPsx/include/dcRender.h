@@ -89,6 +89,12 @@ typedef struct {
     short	v;
 } SDC_VertexTexturedNormal; // POLIGON_VERTEX_TEXTURED_NORMAL
 
+typedef struct{
+    u_long  mode;		/* pixel mode */
+	RECT	crect;		/* CLUT rectangle on frame buffer */
+	RECT	prect;		/* texture image rectangle on frame buffer */
+} SDC_Texture;
+
 typedef struct {
     void*     vertexs;
     u_short*  indices;
@@ -96,6 +102,7 @@ typedef struct {
     u_short   numIndices;
     u_short   numVertices;
     EDC_PolygonVertexType polygonVertexType;
+    SDC_Texture textureData;
     
 } SDC_Mesh3D;
 

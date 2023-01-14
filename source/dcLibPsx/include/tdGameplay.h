@@ -53,17 +53,25 @@ typedef struct tdActor{
     tdMesh meshData;
 } tdActor;
 
-typedef struct tdCollisionPlane
+typedef struct SDC_OOBB
 {
-
-} tdCollisionPlane;
+    VECTOR center;
+    VECTOR halfSize;
+    SVECTOR rotation;
+} SDC_OOBB;
 
 typedef struct tdLoncha{
     tdActor* actors;
     int numActors;
-    tdCollisionPlane* collisions;
+    SDC_OOBB* collisions;
     int numCollisions;
 } tdLoncha;
+
+typedef struct tdTIMDataHandler{
+    u_long* tim_identifier;
+    TIM_IMAGE timImage;
+    SDC_Texture textureData;
+}tdTIMDataHandler;
 
 // Draws and actor using a camera
 void DrawActor(tdActor* actor, SDC_Render* render,  SDC_Camera* camera);
