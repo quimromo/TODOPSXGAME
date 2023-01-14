@@ -66,6 +66,10 @@ typedef struct tdTIMDataHandler{
     SDC_Texture textureData;
 }tdTIMDataHandler;
 
+
+extern tdTIMDataHandler timData[10];
+SDC_Texture* GetTextureDataAndLoadIfNeeded(u_long* tim_identifier);
+
 // Draws and actor using a camera
 void DrawActor(tdActor* actor, SDC_Render* render,  SDC_Camera* camera);
 // Draws bounding box of an actor given a camera

@@ -3,8 +3,16 @@
 #include "dcMath.h"
 #include "TestTile.h"
 #include "assets/barkitu.h"
-
+#include "LVL_Loncha_00.h"
+#include "LVL_Loncha_01.h"
+#include "LVL_Loncha_02.h"
+#include "LVL_Loncha_03.h"
 #include <libetc.h>
+#include <stdio.h>
+
+#define IMMUNITY_BLINK_RATE 3
+#define HIT_IMMUNITY_DURATION 60
+#define WALL HIT_IMMUNITY_DURATION 30
 
 extern tdLoncha levelData_LVL_Lonchas;
 extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
@@ -26,16 +34,20 @@ enum ESteeringDirection
     STEERING_LEFT,
     STEERING_NONE
 };
-
-tdLoncha currentLoncha;
-tdLoncha nextLoncha;
+tdLoncha* currentLoncha;
+tdLoncha* nextLoncha;
+unsigned long CurrentFrame = 0;
 
 VECTOR lonchaOffset = {0};
 
 int offsetToChangeLoncha = 8900;
 
 tdActor Player;
+int bPlayerVisible = 1;
 long CurrentSteering = 0;
+int bImmune = 0;
+int CurrImmunityFrames = 0;
+int ImmunityDuration = 0;
 
 // Movement Variables
 int scrollSpeed = 65;
@@ -47,16 +59,72 @@ long MaxSteering = 40;
 long MinSteering = 3;
 int PrevSteering = STEERING_NONE;
 
-extern int bEpicDebugMode;
+int currentCinematicTime = 0;
+int totalCinematicDuration = 4096;
+char bCinematicMode = 0;
 
-tdLoncha GetNewLoncha(void)
+extern int bEpicDebugMode;
+extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
+
+tdLoncha* lonchasList[] = {
+    &levelData_LVL_Loncha_00,
+    &levelData_LVL_Loncha_01,
+    &levelData_LVL_Loncha_02,
+    &levelData_LVL_Loncha_03
+};
+
+int idInLonchasList = 0;
+
+// Loads texture data an computes meshes bounding boxes
+void InitializeLonchas()
 {
-    tdLoncha newLoncha = levelData_LVL_Lonchas;
+    int numLonchasInList = sizeof(lonchasList) / sizeof(lonchasList[0]);
+    for(int i = 0; i<numLonchasInList; ++i)
+    {
+        tdLoncha* loncha = lonchasList[i];
+        for(int j = 0; j<loncha->numActors; ++j)
+        {
+            // Initialize texture data
+            SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded( loncha->actors[i].meshData.texture_tim);
+            loncha->actors[i].meshData.mesh->textureData = *textureData;
+            
+            // Initialize bounding box
+            InitializeActorBoundingBoxBasedOnMesh(&loncha->actors[i]);
+        }
+    }
+}
+
+void IncrementLonchasListId()
+{
+    idInLonchasList++;
+    int numLonchasInList = sizeof(lonchasList) / sizeof(lonchasList[0]);
+    if(idInLonchasList >= numLonchasInList)
+    {
+        idInLonchasList = 0;
+    }
+}
+
+tdLoncha* GetNewLoncha(void)
+{
+    tdLoncha* newLoncha = lonchasList[idInLonchasList];
+    IncrementLonchasListId();
     return newLoncha;
+}
+
+void OnPlayerObstacleHit()
+{
+    if (bImmune)
+        return;
+
+    CurrImmunityFrames = 0;
+    ImmunityDuration = HIT_IMMUNITY_DURATION;
+    bImmune = 1;
 }
 
 void riverInitScene(tdGameMode* gameMode)
 {
+    InitializeLonchas();
+
     dcCamera_SetScreenResolution(gameMode->camera, SCREEN_WIDTH, SCREEN_HEIGHT);
     lonchaOffset = VECTOR_ZERO;
     lonchaOffset.vz -= offsetToChangeLoncha >> 2; // pivot is in the center, so we offset half the mesh
@@ -64,7 +132,9 @@ void riverInitScene(tdGameMode* gameMode)
     nextLoncha = GetNewLoncha();
 
     Player.meshData.mesh = &barkitu_Mesh;
-    Player.meshData.mesh->textureData = timData[1].textureData;
+    Player.meshData.texture_tim = _binary_assets_textures_texturaEpica_tim_start;
+    SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded(Player.meshData.texture_tim);
+    Player.meshData.mesh->textureData = *textureData;
     Player.scale.vx = 4000;
     Player.scale.vy = 4000;
     Player.scale.vz = 4000;
@@ -75,6 +145,24 @@ void riverInitScene(tdGameMode* gameMode)
     Player.rotation.vy = 2000;
 
     Player.position.vz = 1000;
+}
+
+void updatePlayerImmunity()
+{
+    if (!bImmune)
+        return;
+
+    if (CurrImmunityFrames % IMMUNITY_BLINK_RATE == 0)
+    {
+        bPlayerVisible = bPlayerVisible ? 0 : 1;
+    }
+
+    CurrImmunityFrames++;
+    if (CurrImmunityFrames > ImmunityDuration)
+    {
+        bImmune = 0;
+        bPlayerVisible = 1;
+    }
 }
 
 void updatePlayer()
@@ -133,10 +221,14 @@ void updatePlayer()
     Player.rotation.vy = -CurrentSteering * 7;
 
     Player.position.vx += CurrentSteering;
+
+    updatePlayerImmunity();
 }
 
 void riverUpdateScene(tdGameMode* gameMode)
 {
+    CurrentFrame++;
+
     int prevLonchaIdx = (offsetToChangeLoncha >> 2) + lonchaOffset.vz / offsetToChangeLoncha;
     lonchaOffset.vz += scrollSpeed;
     int newLonchaIdx = (offsetToChangeLoncha >> 2) + lonchaOffset.vz / offsetToChangeLoncha;
@@ -161,22 +253,31 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     long distanceY = cameraPosUnrealZ;
     long distanceZ = -cameraPosUnrealY;
 
-    dcCamera_SetCameraPosition(gameMode->camera, distanceX, distanceY, distanceZ);
-    dcCamera_LookAt(gameMode->camera, &VECTOR_ZERO);
+    if(bCinematicMode)
+    {
+
+    }
+    else
+    {
+        dcCamera_SetCameraPosition(gameMode->camera, distanceX, distanceY, distanceZ);
+        dcCamera_LookAt(gameMode->camera, &VECTOR_ZERO);
+    }
+   
 
     VECTOR NextLonchaOffset = lonchaOffset;
     NextLonchaOffset.vz -= offsetToChangeLoncha;
 
     // Draw the needed lonchas
-    DrawLoncha(&currentLoncha, lonchaOffset, render, gameMode->camera);
-    DrawLoncha(&nextLoncha, NextLonchaOffset, render, gameMode->camera);
+    DrawLoncha(currentLoncha, lonchaOffset, render, gameMode->camera);
+    DrawLoncha(nextLoncha, NextLonchaOffset, render, gameMode->camera);
 
     // If debugging draw collisions
     if(bEpicDebugMode)
     {
-        DrawLonchaCollisions(&currentLoncha, lonchaOffset, render, gameMode->camera);
-        DrawLonchaCollisions(&nextLoncha, NextLonchaOffset, render, gameMode->camera);
+        DrawLonchaCollisions(currentLoncha, lonchaOffset, render, gameMode->camera);
+        DrawLonchaCollisions(nextLoncha, NextLonchaOffset, render, gameMode->camera);
     }
 
-    DrawActor(&Player,render,gameMode->camera);
+    if (bPlayerVisible)
+        DrawActor(&Player,render,gameMode->camera);
 }

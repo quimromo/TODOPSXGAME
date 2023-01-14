@@ -1,7 +1,9 @@
+include ./makeIncludes/textures
 TARGET = MAIN
 TYPE = ps-exe
 
-SRCS = main.c tileset.tim ./assets/textures/waterTilesetFinal.tim ./assets/textures/texturaEpica.tim \
+SRCS = main.c \
+		${TEXTURES_LIST} \
 		../third_party/common/syscalls/printf.s \
 		../third_party/common/crt0/crt0.s \
 		dcLibPsx/src/dcMemory.c\

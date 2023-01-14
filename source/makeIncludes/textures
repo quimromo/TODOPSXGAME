@@ -1,0 +1,4 @@
+TEXTURES_LIST = \
+tileset.tim \
+./assets/textures/waterTilesetFinal.tim \
+./assets/textures/texturaEpica.tim 
