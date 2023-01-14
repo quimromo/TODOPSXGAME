@@ -5,6 +5,11 @@
 #include "assets/barkitu.h"
 
 #include <libetc.h>
+#include <stdio.h>
+
+#define IMMUNITY_BLINK_RATE 3
+#define HIT_IMMUNITY_DURATION 60
+#define WALL HIT_IMMUNITY_DURATION 30
 
 extern tdLoncha levelData_LVL_Lonchas;
 extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
@@ -27,6 +32,8 @@ enum ESteeringDirection
     STEERING_NONE
 };
 
+unsigned long CurrentFrame = 0;
+
 tdLoncha currentLoncha;
 tdLoncha nextLoncha;
 
@@ -35,7 +42,11 @@ VECTOR lonchaOffset = {0};
 int offsetToChangeLoncha = 8900;
 
 tdActor Player;
+int bPlayerVisible = 1;
 long CurrentSteering = 0;
+int bImmune = 0;
+int CurrImmunityFrames = 0;
+int ImmunityDuration = 0;
 
 // Movement Variables
 int scrollSpeed = 65;
@@ -54,6 +65,16 @@ tdLoncha GetNewLoncha(void)
 {
     tdLoncha newLoncha = levelData_LVL_Lonchas;
     return newLoncha;
+}
+
+void OnPlayerObstacleHit()
+{
+    if (bImmune)
+        return;
+
+    CurrImmunityFrames = 0;
+    ImmunityDuration = HIT_IMMUNITY_DURATION;
+    bImmune = 1;
 }
 
 void riverInitScene(tdGameMode* gameMode)
@@ -78,6 +99,24 @@ void riverInitScene(tdGameMode* gameMode)
     Player.rotation.vy = 2000;
 
     Player.position.vz = 1000;
+}
+
+void updatePlayerImmunity()
+{
+    if (!bImmune)
+        return;
+
+    if (CurrImmunityFrames % IMMUNITY_BLINK_RATE == 0)
+    {
+        bPlayerVisible = bPlayerVisible ? 0 : 1;
+    }
+
+    CurrImmunityFrames++;
+    if (CurrImmunityFrames > ImmunityDuration)
+    {
+        bImmune = 0;
+        bPlayerVisible = 1;
+    }
 }
 
 void updatePlayer()
@@ -136,10 +175,14 @@ void updatePlayer()
     Player.rotation.vy = -CurrentSteering * 7;
 
     Player.position.vx += CurrentSteering;
+
+    updatePlayerImmunity();
 }
 
 void riverUpdateScene(tdGameMode* gameMode)
 {
+    CurrentFrame++;
+
     int prevLonchaIdx = (offsetToChangeLoncha >> 2) + lonchaOffset.vz / offsetToChangeLoncha;
     lonchaOffset.vz += scrollSpeed;
     int newLonchaIdx = (offsetToChangeLoncha >> 2) + lonchaOffset.vz / offsetToChangeLoncha;
@@ -181,5 +224,6 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
         DrawLonchaCollisions(&nextLoncha, NextLonchaOffset, render, gameMode->camera);
     }
 
-    DrawActor(&Player,render,gameMode->camera);
+    if (bPlayerVisible)
+        DrawActor(&Player,render,gameMode->camera);
 }
