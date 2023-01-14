@@ -1,5 +1,5 @@
 #pragma once
-#include "../tdGameplay.h"
+#include "tdGameplay.h"
 #include "lonchaBase.h"
 
 extern unsigned long _binary_assets_textures_TilesetDelCampo_tim_start[];
