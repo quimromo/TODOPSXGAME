@@ -26,6 +26,8 @@ unsigned int perftest_lastcounter; // the last sampled counter value
 unsigned int perftest_numcycles; // the number of completed test cycles
 unsigned int perftest_currtest; // which test is currently running
 
+extern int totalPrimitives;
+
 SDC_Render render;
 SDC_DrawParams drawParams = {
     .tim = NULL,
@@ -213,6 +215,7 @@ int main(void)
 
     while (1)
     {
+        int primitivesBeforeFrame = totalPrimitives;
         // Cycle game-modes by pressing start
         u_long padState = PadRead(0);
         u_long startState = _PAD(0,PADstart ) & padState;
@@ -250,8 +253,9 @@ int main(void)
         int updateDuration = counterAfterUpdate - counterBeforeUpdate;
         int drawDuration = counterAfterDraw - counterBeforeDraw;
         int swapDuration = counterAfterSwap - counterBeforeSwap;
+        int drawnPrimitives = totalPrimitives - primitivesBeforeFrame;
 
-        FntPrint("Update: %d Draw: %d Swap: %d", updateDuration, drawDuration, swapDuration);
+        FntPrint("Update: %d Draw: %d Swap: %d              Primitives: %d", updateDuration, drawDuration, swapDuration, drawnPrimitives);
         
     }
 
