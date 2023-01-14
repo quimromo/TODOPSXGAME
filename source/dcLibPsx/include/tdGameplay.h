@@ -53,6 +53,18 @@ typedef struct tdActor{
     tdMesh meshData;
 } tdActor;
 
+typedef struct tdCollisionPlane
+{
+
+} tdCollisionPlane;
+
+typedef struct tdLoncha{
+    tdActor* actors;
+    int numActors;
+    tdCollisionPlane* collisions;
+    int numCollisions;
+} tdLoncha;
+
 // Draws and actor using a camera
 void DrawActor(tdActor* actor, SDC_Render* render,  SDC_Camera* camera);
 // Draws bounding box of an actor given a camera
