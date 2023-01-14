@@ -76,3 +76,8 @@ void InitializeActorBoundingBoxBasedOnMesh(tdActor* actor);
 void GetActorTransform(tdActor* actor, MATRIX* outTransform);
 // Draws an array of actors
 void DrawActorArray(tdActor actorArray[], int numActors, SDC_Render* render, SDC_Camera* camera, int bDrawBoundingBox);
+
+void GetActorTransformOffset(tdActor* actor, VECTOR offset, MATRIX* outTransform);
+void DrawActorOffset(tdActor* actor, VECTOR offset, SDC_Render* render, SDC_Camera* camera);
+void DrawActorArrayOffset(tdActor actorArray[], int numActors, VECTOR offset, SDC_Render* render, SDC_Camera* camera, int bDrawBoundingBox);
+void DrawActorBoundingBoxOffset(tdActor* actor, VECTOR offset, SDC_Render* render,  SDC_Camera* camera);

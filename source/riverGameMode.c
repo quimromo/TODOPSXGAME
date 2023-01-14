@@ -13,19 +13,23 @@ tdGameMode riverGameMode =
     .drawFunction = &riverDrawScene
 };
 
+
+tdLoncha currentLoncha;
+tdLoncha nextLoncha;
+
+VECTOR lonchaOffset = {0};
+
+int scrollSpeed = 3;
+
 void riverInitScene(tdGameMode* gameMode)
 {
     dcCamera_SetScreenResolution(gameMode->camera, SCREEN_WIDTH, SCREEN_HEIGHT);
+    lonchaOffset = VECTOR_ZERO;
 }
 
 void riverUpdateScene(tdGameMode* gameMode)
 {
-    int numActors = sizeof(levelData_TestTile) / sizeof(levelData_TestTile[0]);
-    for (int i = 0; i < numActors; ++i)
-    {
-        int speed = 3;
-        levelData_TestTile[i].position.vz += speed;
-    }
+    lonchaOffset.vz += scrollSpeed;
 }
 
 void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
@@ -41,6 +45,7 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     dcCamera_SetCameraPosition(gameMode->camera, distanceX, distanceY, distanceZ);
     dcCamera_LookAt(gameMode->camera, &VECTOR_ZERO);
 
-    int numActors = sizeof(levelData_TestTile) / sizeof(levelData_TestTile[0]);
-    DrawActorArray(levelData_TestTile, numActors, render, gameMode->camera, 1);
+    //DrawActorArrayOffset(currentLoncha.actors, currentLoncha.numActors, offset, render, gameMode->camera, 0);
+    //DrawActorArrayOffset(nextLoncha.actors, nextLoncha.numActors, offset, render, gameMode->camera, 0);
+    DrawActorArrayOffset(levelData_TestTile, 2, lonchaOffset, render, gameMode->camera, 0);
 }
