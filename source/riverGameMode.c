@@ -314,9 +314,9 @@ void riverUpdateScene(tdGameMode* gameMode)
 {
     CurrentFrame++;
 
-    int prevLonchaIdx = ((offsetToChangeLoncha >> 2) + lonchaOffset.vz) / offsetToChangeLoncha;
+    int prevLonchaIdx = lonchaOffset.vz / offsetToChangeLoncha;
     lonchaOffset.vz += scrollSpeed;
-    int newLonchaIdx = ((offsetToChangeLoncha >> 1) + lonchaOffset.vz) / offsetToChangeLoncha;
+    int newLonchaIdx = lonchaOffset.vz / offsetToChangeLoncha;
 
     if (prevLonchaIdx != newLonchaIdx)
     {

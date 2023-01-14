@@ -52,7 +52,6 @@ void DrawActorOffset(tdActor* actor, VECTOR offset, SDC_Render* render, SDC_Came
     SDC_DrawParams drawParams;
     drawParams.bLighting = 0;
     drawParams.backFaceCullMode = 0;
-    drawParams.tim = actor->meshData.mesh->tim;
     drawParams.bUseConstantColor = 1;
     CVECTOR drawColor = {120,120,120};
     drawParams.constantColor = drawColor;

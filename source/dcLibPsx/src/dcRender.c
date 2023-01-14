@@ -59,14 +59,14 @@ void dcRender_Init(SDC_Render* render, int width, int height, CVECTOR bgColor, i
     SetDefDispEnv( &render->displayEnvironment[1], 0, 0,      width, height );
 
     setRGB0( &render->drawEnvironment[0], bgColor.r, bgColor.g, bgColor.b );
-    render->drawEnvironment[0].isbg = 1;
+    render->drawEnvironment[0].isbg = 0;
     render->drawEnvironment[0].dtd = 1;
-    render->displayEnvironment[0].isinter = 1;
+    render->displayEnvironment[0].isinter = 0;
 
     setRGB0( &render->drawEnvironment[1], bgColor.r, bgColor.g, bgColor.b );
-    render->drawEnvironment[1].isbg = 1;
+    render->drawEnvironment[1].isbg = 0;
     render->drawEnvironment[1].dtd = 1;
-    render->displayEnvironment[1].isinter = 1;
+    render->displayEnvironment[1].isinter = 0;
 
     SetDispMask(1);    
 	// Set GTE offset (recommended method  of centering)
@@ -195,9 +195,103 @@ void dcRender_DrawSpriteBg(SDC_Render* render, SDC_Texture* texture, short x, sh
 #define CALC_WARP_Y(z, maxYoffset) (DC_LERP(0, (maxYoffset), DC_MUL((z), (z))))
 #define WARP_POLY_Y(p3, z, maxYOffset) { short yWarpOffset = CALC_WARP_Y(z, maxYOffset); p3->y0 += yWarpOffset; p3->y1 += yWarpOffset; p3->y2 += yWarpOffset; }
 
+typedef void (*VertexRenderFunction)(SDC_Mesh3D* mesh, SDC_Render* render, CVECTOR* color);
+
+void DrawPolyVertex(SDC_Mesh3D* mesh, SDC_Render* render, CVECTOR* color)
+{
+    CVECTOR curr_color = {255, 255, 255};
+    if(color) 
+        curr_color = *color;
+
+    for (int i = 0; i < mesh->numIndices; i += 3) {
+        u_short index0 = mesh->indices[i];
+        u_short index1 = mesh->indices[i+1];
+        u_short index2 = mesh->indices[i+2];
+        // assert(index0 < mesh->numVertices);
+        // assert(index1 < mesh->numVertices);
+        // assert(index2 < mesh->numVertices);
+        void *poly = render->nextPrimitive;  
+
+        u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
+        int orderingTableCount = render->orderingTableCount;
+        long p, otz, flg;
+        int nclip;
+
+        POLY_F3* polyF3 = (POLY_F3*)poly;
+        setPolyF3(polyF3);
+        SDC_Vertex *vertexs = (SDC_Vertex *)mesh->vertexs;
+        nclip = RotAverageNclip3(&vertexs[index0].position, &vertexs[index1].position, &vertexs[index2].position,
+            (long *)&polyF3->x0, (long *)&polyF3->x1, (long *)&polyF3->x2, &p, &otz, &flg);
+
+        
+        setRGB0(polyF3, curr_color.r, curr_color.g, curr_color.b);
+
+        if (nclip <= 0) continue;
+        if ((otz <= 0) || (otz >= orderingTableCount)) continue;
+
+        addPrim(orderingTable[otz], polyF3);
+        _dcRender_IncPrimitive(render, sizeof(POLY_F3));
+    }
+}
+
+void DrawPolyVertexTextured(SDC_Mesh3D* mesh, SDC_Render* render, CVECTOR* color)
+{
+    u_short clut = getClut(mesh->textureData.crect.x, mesh->textureData.crect.y); /*texture CLUT*/
+    u_short tpage = getTPage(mesh->textureData.mode, 0, mesh->textureData.prect.x, mesh->textureData.prect.y); /*texture page*/
+
+    CVECTOR curr_color = {255, 255, 255};
+    if(color) 
+            curr_color = *color;
+
+    for (int i = 0; i < mesh->numIndices; i += 3) {
+        u_short index0 = mesh->indices[i];
+        u_short index1 = mesh->indices[i+1];
+        u_short index2 = mesh->indices[i+2];
+        // assert(index0 < mesh->numVertices);
+        // assert(index1 < mesh->numVertices);
+        // assert(index2 < mesh->numVertices);
+        void *poly = render->nextPrimitive;  
+
+        u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
+        int orderingTableCount = render->orderingTableCount;
+        long p, otz, flg;
+        int nclip;
+
+        POLY_FT3* polyFT3 = (POLY_FT3*)poly;
+        SDC_VertexTextured *vertexs = (SDC_VertexTextured *)mesh->vertexs;
+
+        nclip = RotAverageNclip3(&vertexs[index0].position, &vertexs[index1].position, &vertexs[index2].position,
+                                (long *)&polyFT3->x0, (long *)&polyFT3->x1, (long *)&polyFT3->x2, &p, &otz, &flg);
+        if (nclip <= 0) continue;
+        if ((otz <= 0) || (otz >= orderingTableCount)) continue;
+
+        setPolyFT3(polyFT3);
+        setRGB0(polyFT3, curr_color.r, curr_color.g, curr_color.b);
+        setUV3(polyFT3, vertexs[index0].u , vertexs[index0].v, vertexs[index1].u , vertexs[index1].v, vertexs[index2].u , vertexs[index2].v);
+        polyFT3->tpage = tpage;
+        polyFT3->clut = clut;
+
+        WARP_POLY_Y(polyFT3, otz, 64)
+        addPrim(&orderingTable[otz], polyFT3);
+
+        _dcRender_IncPrimitive(render, sizeof(POLY_FT3));
+    }
+}
+
+// TODO implement other functions if needed
+VertexRenderFunction vertexRenderFunctions[] = {
+    &DrawPolyVertex, //    POLIGON_VERTEX,
+    &DrawPolyVertex, //    POLIGON_VERTEX_COLOR,
+    &DrawPolyVertex, //    POLIGON_VERTEX_NORMAL,  //Gouraud-shaded
+    &DrawPolyVertex, //    POLIGON_VERTEX_COLOR_NORMAL,  //Gouraud-shaded
+    &DrawPolyVertexTextured, //    POLIGON_VERTEX_TEXTURED,
+    &DrawPolyVertex, //    POLIGON_VERTEX_TEXTURED_COLOR, //Gouraud-shaded
+    &DrawPolyVertex //    POLIGON_VERTEX_TEXTURED_NORMAL //Gouraud-shaded (TODO)
+};
+
 void dcRender_DrawMesh(SDC_Render* render,  SDC_Mesh3D* mesh, MATRIX* transform, SDC_DrawParams* drawParams) 
 {
-    assert(render && mesh && transform);
+    // assert(render && mesh && transform);
     u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
     int orderingTableCount = render->orderingTableCount;
     long p, otz, flg;
@@ -208,14 +302,20 @@ void dcRender_DrawMesh(SDC_Render* render,  SDC_Mesh3D* mesh, MATRIX* transform,
 
     const u_short bLighting = drawParams && drawParams->bLighting;
     CVECTOR* color = drawParams && drawParams->bUseConstantColor ? &drawParams->constantColor : NULL;
-    
+
+    VertexRenderFunction renderFunction = vertexRenderFunctions[mesh->polygonVertexType];
+    renderFunction(mesh, render, color);
+
+    /// We don't do these things below as they are slow
+    return;
+
     for (int i = 0; i < mesh->numIndices; i += 3) {               
         u_short index0 = mesh->indices[i];
         u_short index1 = mesh->indices[i+1];
         u_short index2 = mesh->indices[i+2];
-        assert(index0 < mesh->numVertices);
-        assert(index1 < mesh->numVertices);
-        assert(index2 < mesh->numVertices);
+        // assert(index0 < mesh->numVertices);
+        // assert(index1 < mesh->numVertices);
+        // assert(index2 < mesh->numVertices);
         void *poly = render->nextPrimitive;  
 
         CVECTOR c0, c1, c2;  
@@ -458,7 +558,7 @@ void dcRender_DrawMesh(SDC_Render* render,  SDC_Mesh3D* mesh, MATRIX* transform,
 
 void dcRender_DrawBackground(SDC_Render* render, SDC_Texture* texture, MATRIX* transform, SVECTOR position)
 {
-    assert(render && transform);
+    //assert(render && transform);
     u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
     int orderingTableCount = render->orderingTableCount;
     long p, flg;
@@ -491,7 +591,7 @@ void dcRender_DrawBackground(SDC_Render* render, SDC_Texture* texture, MATRIX* t
 void dcRender_DrawLine(SDC_Render* render, SVECTOR* v0, SVECTOR* v1, MATRIX* transform, CVECTOR* color, u_short segments )
 {
     
-    assert(render && v0 && v1 && transform && segments > 0);
+    //assert(render && v0 && v1 && transform && segments > 0);
     u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
     int orderingTableCount = render->orderingTableCount;
     long p, flg;

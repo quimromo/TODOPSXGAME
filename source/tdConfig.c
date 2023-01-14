@@ -1,2 +1,2 @@
 
-char bIntroCinematicEnabled = 1;
+char bIntroCinematicEnabled = 0;
