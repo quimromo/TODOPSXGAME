@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <memory.h>
+#include "dcMath.h"
 
 int totalPrimitives = 0;
 
@@ -168,6 +169,9 @@ void dcRender_DrawSpriteRect(SDC_Render* render, const TIM_IMAGE *tim, short x, 
 
 // #pragma GCC push_options
 // #pragma GCC optimize ("O0")
+
+#define CALC_WARP_Y(z, maxYoffset) (DC_LERP(0, (maxYoffset), DC_MUL((z), (z))))
+#define WARP_POLY_Y(p3, z, maxYOffset) { short yWarpOffset = CALC_WARP_Y(z, maxYOffset); p3->y0 += yWarpOffset; p3->y1 += yWarpOffset; p3->y2 += yWarpOffset; }
 
 void dcRender_DrawMesh(SDC_Render* render,  SDC_Mesh3D* mesh, MATRIX* transform, SDC_DrawParams* drawParams) 
 {
@@ -351,11 +355,14 @@ void dcRender_DrawMesh(SDC_Render* render,  SDC_Mesh3D* mesh, MATRIX* transform,
                     polyFT3->clut = GetClut (mesh->textureData.crect.x, mesh->textureData.crect.y); /*texture CLUT*/
                 }
 
+
+
                 nclip = RotAverageNclip3(&vertexs[index0].position, &vertexs[index1].position, &vertexs[index2].position,
                                         (long *)&polyFT3->x0, (long *)&polyFT3->x1, (long *)&polyFT3->x2, &p, &otz, &flg);
                 if (nclip <= 0) continue;
                 if ((otz <= 0) || (otz >= orderingTableCount)) continue;
 
+                WARP_POLY_Y(polyFT3, otz, 64)
 				addPrim(&orderingTable[otz], polyFT3);
 
                 _dcRender_IncPrimitive(render, sizeof(POLY_FT3));

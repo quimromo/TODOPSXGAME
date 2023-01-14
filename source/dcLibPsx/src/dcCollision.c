@@ -3,8 +3,6 @@
 #include "dcMath.h"
 #include <stdio.h>
 
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
 
 long dcCollision_RaySphereInteresct( VECTOR* rayOrigin, SVECTOR* rayDir, VECTOR* sphereCenter, long sphereRadius )
 {
@@ -199,4 +197,3 @@ int dcCollision_shapesCollide(SDC_Shape* shapeA, SDC_Shape* shapeB)
     return 0;
 }
 
-#pragma GCC pop_options
