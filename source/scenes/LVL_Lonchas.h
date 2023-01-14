@@ -2,34 +2,31 @@
 #include "tdGameplay.h"
 #include "lonchaBase.h"
 
+#include "barkitu.h"
+
 #include "obstacle01.h"
 
-#include "td_Character_VAPOR_TEST.h"
-
 extern unsigned long _binary_assets_textures_waterTilesetSmall_tim_start[];
-TIM_IMAGE tim_waterTilesetSmall;
 
 extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
-TIM_IMAGE tim_texturaEpica;
-
 
 tdActor levelData_LVL_Lonchas_actors[] = {
 {.position = {0,0,0}, .meshData={.mesh=&lonchaBase_Mesh, .texture_tim=_binary_assets_textures_waterTilesetSmall_tim_start},
 .scale = {4000,4000,4000},
 .rotation={0, 0, 0}},
-{.position = {2090,0,-3720}, .meshData={.mesh=&obstacle01_Mesh, .texture_tim=_binary_assets_textures_waterTilesetSmall_tim_start},
+{.position = {430,0,3260}, .meshData={.mesh=&barkitu_Mesh, .texture_tim=_binary_assets_textures_texturaEpica_tim_start},
+.scale = {4000,4000,4000},
+.rotation={0, 2000, 0}},
+{.position = {-800,0,-680}, .meshData={.mesh=&obstacle01_Mesh, .texture_tim=_binary_assets_textures_waterTilesetSmall_tim_start},
 .scale = {4000,4000,4000},
 .rotation={0, 0, 0}},
 {.position = {1810,0,2900}, .meshData={.mesh=&obstacle01_Mesh, .texture_tim=_binary_assets_textures_waterTilesetSmall_tim_start},
 .scale = {4000,4000,4000},
 .rotation={0, 0, 0}},
-{.position = {-800,0,-680}, .meshData={.mesh=&obstacle01_Mesh, .texture_tim=_binary_assets_textures_waterTilesetSmall_tim_start},
+{.position = {2090,0,-3720}, .meshData={.mesh=&obstacle01_Mesh, .texture_tim=_binary_assets_textures_waterTilesetSmall_tim_start},
 .scale = {4000,4000,4000},
 .rotation={0, 0, 0}},
 {.position = {-2030,0,2900}, .meshData={.mesh=&obstacle01_Mesh, .texture_tim=_binary_assets_textures_waterTilesetSmall_tim_start},
-.scale = {4000,4000,4000},
-.rotation={0, 0, 0}},
-{.position = {430,0,-3160}, .meshData={.mesh=&td_Character_VAPOR_TEST_Mesh, .texture_tim=_binary_assets_textures_texturaEpica_tim_start},
 .scale = {4000,4000,4000},
 .rotation={0, 0, 0}}
 };

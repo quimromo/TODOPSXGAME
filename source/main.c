@@ -42,14 +42,19 @@ int bDrawHouses = 0;
 
 SVECTOR cameraOffset = {0, 0, 0};
 
+int bEpicDebugMode = 0;
+
 void DrawLoncha(tdLoncha* loncha, SDC_Render* render, SDC_Camera* camera)
 {
-    // DrawActorArray(&loncha->actors, render, camera);
+    DrawActorArray(loncha->actors, loncha->numActors, render, camera, 0);
 }
 
 void DrawLonchaCollisions(tdLoncha* loncha, SDC_Render* render, SDC_Camera* camera)
 {
-
+    for (int i = 0; i < loncha->numCollisions; ++i)
+    {
+        DrawOOBBDebug(&loncha->collisions[i], render, camera);
+    }
 }
 
 void DrawHouses(SDC_Render* render, SDC_Camera* camera)
@@ -91,7 +96,11 @@ void DrawHouses(SDC_Render* render, SDC_Camera* camera)
     dcCamera_SetCameraPosition(camera, distanceX+cameraOffset.vx, distanceY+cameraOffset.vy, distanceZ+cameraOffset.vz);
     dcCamera_LookAt(camera, &cameraLookAt);
 
-    DrawActorArray(levelData_LVL_Lonchas.actors, levelData_LVL_Lonchas.numActors, render, camera, 0);
+    DrawLoncha(&levelData_LVL_Lonchas, render, camera);
+    if(bEpicDebugMode)
+    {
+        DrawLonchaCollisions(&levelData_LVL_Lonchas, render, camera);
+    }
 }
 
 void HousesDrawFunction(tdGameMode* gameMode, SDC_Render* render)
@@ -99,9 +108,21 @@ void HousesDrawFunction(tdGameMode* gameMode, SDC_Render* render)
     DrawHouses(render, gameMode->camera);
 }
 
+int prevSelectState = 0;
 void HousesUpdateLoop(tdGameMode* gameMode)
 {
+    u_long padState = PadRead(0);
 
+    int currentSelectState = (_PAD(0,PADselect ) & padState );
+
+    if(!currentSelectState && prevSelectState)
+    {
+        bEpicDebugMode = bEpicDebugMode ? 0 : 1;
+    }
+
+    prevSelectState = currentSelectState;
+
+    
 }
 
 void InitGameMode(tdGameMode* gameMode)

@@ -72,6 +72,52 @@ void DrawActorArrayOffset(tdActor actorArray[], int numActors, VECTOR offset, SD
     }
 }
 
+void DrawBox(SVECTOR min, SVECTOR max, MATRIX* transform, SDC_Render* render,  SDC_Camera* camera, CVECTOR* drawColor)
+{
+    // Cube vertexs
+    SVECTOR v000 = { min.vx, min.vy, min.vz};
+    SVECTOR v001 = { min.vx, min.vy, max.vz};
+    SVECTOR v010 = { min.vx, max.vy, min.vz};
+    SVECTOR v011 = { min.vx, max.vy, max.vz};
+    SVECTOR v100 = { max.vx, min.vy, min.vz};
+    SVECTOR v101 = { max.vx, min.vy, max.vz};
+    SVECTOR v110 = { max.vx, max.vy, min.vz};
+    SVECTOR v111 = { max.vx, max.vy, max.vz};
+
+    // Cube edges
+    dcRender_DrawLine(render, &v000, &v100, transform, drawColor, 2);
+    dcRender_DrawLine(render, &v000, &v010, transform, drawColor, 2);
+    dcRender_DrawLine(render, &v000, &v001, transform, drawColor, 2);
+
+    dcRender_DrawLine(render, &v110, &v111, transform, drawColor, 2);
+    dcRender_DrawLine(render, &v011, &v111, transform, drawColor, 2);
+    dcRender_DrawLine(render, &v101, &v111, transform, drawColor, 2);
+
+    dcRender_DrawLine(render, &v001, &v101, transform, drawColor, 2);
+    dcRender_DrawLine(render, &v001, &v011, transform, drawColor, 2);
+
+    dcRender_DrawLine(render, &v010, &v011, transform, drawColor, 2);
+    dcRender_DrawLine(render, &v010, &v110, transform, drawColor, 2);
+
+    dcRender_DrawLine(render, &v100, &v101, transform, drawColor, 2);
+    dcRender_DrawLine(render, &v100, &v110, transform, drawColor, 2);
+}
+
+void DrawOOBBDebug(SDC_OOBB* oobb, SDC_Render* render,  SDC_Camera* camera)
+{
+    MATRIX transform = {0};
+    RotMatrix(&oobb->rotation, &transform);
+    TransMatrix(&transform, &oobb->center);
+    dcCamera_ApplyCameraTransform(camera, &transform, &transform);
+
+    SVECTOR min = { - oobb->halfSize.vx, -oobb->halfSize.vy, -oobb->halfSize.vz};
+    SVECTOR max = { oobb->halfSize.vx, oobb->halfSize.vy,  oobb->halfSize.vz};
+
+    CVECTOR drawColor = {255,255,60};
+    DrawBox(min, max, &transform, render, camera, &drawColor);
+}
+
+
 void DrawActorBoundingBoxOffset(tdActor* actor, VECTOR offset, SDC_Render* render,  SDC_Camera* camera)
 {
     // Actor transform
@@ -82,34 +128,7 @@ void DrawActorBoundingBoxOffset(tdActor* actor, VECTOR offset, SDC_Render* rende
     CVECTOR drawColor = {255,60,60};
 
     tdBoundingBox* boundingBox = &actor->physicsData.boundingBox;
-
-    // Cube vertexs
-    SVECTOR v000 = { boundingBox->min.vx, boundingBox->min.vy, boundingBox->min.vz};
-    SVECTOR v001 = { boundingBox->min.vx, boundingBox->min.vy, boundingBox->max.vz};
-    SVECTOR v010 = { boundingBox->min.vx, boundingBox->max.vy, boundingBox->min.vz};
-    SVECTOR v011 = { boundingBox->min.vx, boundingBox->max.vy, boundingBox->max.vz};
-    SVECTOR v100 = { boundingBox->max.vx, boundingBox->min.vy, boundingBox->min.vz};
-    SVECTOR v101 = { boundingBox->max.vx, boundingBox->min.vy, boundingBox->max.vz};
-    SVECTOR v110 = { boundingBox->max.vx, boundingBox->max.vy, boundingBox->min.vz};
-    SVECTOR v111 = { boundingBox->max.vx, boundingBox->max.vy, boundingBox->max.vz};
-
-    // Cube edges
-    dcRender_DrawLine(render, &v000, &v100, &transform, &drawColor, 2);
-    dcRender_DrawLine(render, &v000, &v010, &transform, &drawColor, 2);
-    dcRender_DrawLine(render, &v000, &v001, &transform, &drawColor, 2);
-
-    dcRender_DrawLine(render, &v110, &v111, &transform, &drawColor, 2);
-    dcRender_DrawLine(render, &v011, &v111, &transform, &drawColor, 2);
-    dcRender_DrawLine(render, &v101, &v111, &transform, &drawColor, 2);
-
-    dcRender_DrawLine(render, &v001, &v101, &transform, &drawColor, 2);
-    dcRender_DrawLine(render, &v001, &v011, &transform, &drawColor, 2);
-
-    dcRender_DrawLine(render, &v010, &v011, &transform, &drawColor, 2);
-    dcRender_DrawLine(render, &v010, &v110, &transform, &drawColor, 2);
-
-    dcRender_DrawLine(render, &v100, &v101, &transform, &drawColor, 2);
-    dcRender_DrawLine(render, &v100, &v110, &transform, &drawColor, 2);
+    DrawBox(boundingBox->min, boundingBox->max, &transform, render, camera, &drawColor);
 }
 
 void InitializeActorBoundingBoxBasedOnMesh(tdActor* actor)
