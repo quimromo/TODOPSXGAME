@@ -186,7 +186,7 @@ void dcBF_moveShape( SDC_Broadphase* bf, unsigned shapeId, SVECTOR* newPos )
 
 }
 
-int dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape , SDC_Render* DebugRenderer, SDC_Camera* camera)
+SDC_Shape* dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape , SDC_Render* DebugRenderer, SDC_Camera* camera)
 {
     //DRAW DEBUG
     // if (DebugRenderer && shape->shapeType == ST_SPHERE)
@@ -212,10 +212,10 @@ int dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape , SDC_Render* Debug
         //printf("%d - OOBB at: ( %d, %d, %d )\n", i, bf->shapes[i].oobb.center.vx, bf->shapes[i].oobb.center.vy, bf->shapes[i].oobb.center.vz );
         if( dcCollision_shapesCollide(&bf->shapes[i], shape, DebugRenderer,camera) )
         {
-            return 1;
+            return &bf->shapes[i];
         }
     }
-    return 0;
+    return NULL;
 }
 
 int dcCollision_shapesCollide(SDC_Shape* shapeA, SDC_Shape* shapeB, SDC_Render* DebugRenderer, SDC_Camera* camera)
