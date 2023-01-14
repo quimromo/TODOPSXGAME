@@ -46,5 +46,36 @@ long dcCollision_RayBOXInteresct( VECTOR* rayOrigin, SVECTOR* rayDir, VECTOR* bo
 
 long dcCollision_SpheresOverlap( VECTOR* sphere1Center, VECTOR* sphere2center, long sphere1Radius, long sphere2Radius )
 {
-    return 0;
+    long radiusSum = sphere1Radius + sphere2Radius;
+    return DC_SQDIST32(sphere1Center, sphere2center) - DC_MUL64(radiusSum, radiusSum);
 }
+
+long dcCollision_SphereAABBOverlap( VECTOR* boxHalfSize, VECTOR* boxCenter, VECTOR* sphereCenter, long sphereRadius )
+{
+    VECTOR p = { .vx = sphereCenter->vx - boxCenter->vx, .vy = sphereCenter->vy - boxCenter->vy, .vz = sphereCenter->vz - boxCenter->vz };
+    p.vx = abs(p.vx) - boxCenter->vx;
+    p.vy = abs(p.vy) - boxCenter->vy;
+    p.vz = abs(p.vz) - boxCenter->vz;
+
+    VECTOR maxP0 = { DC_MAX(p.vx, 0), DC_MAX(p.vy, 0), DC_MAX(p.vz, 0) };
+    return DC_LENGTH(&maxP0) + DC_MIN( DC_MAX(p.vx, DC_MAX(p.vy, p.vz)), 0 ) - sphereRadius;
+
+    // float sdBox( vec3 p, vec3 b )
+    // {
+    // vec3 q = abs(p) - b;
+    // return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+    // }
+}
+
+long dcCollision_SphereBOXOverlap( VECTOR* boxHalfSize, MATRIX* boxTransform,  VECTOR* sphereCenter, long sphereRadius )
+{
+    VECTOR transformedSphereCenter;
+    ApplyMatrixLV(boxTransform, sphereCenter, &transformedSphereCenter );
+
+    VECTOR boxCenter = {0};
+    return dcCollision_SphereAABBOverlap(boxHalfSize, &boxCenter, sphereCenter, sphereRadius );
+
+}
+
+
+
