@@ -37,7 +37,7 @@ long distance = 800;
 long cameraHeight = 600;
 
 tdGameMode* currentGameMode = NULL;
-tdTIMDataHandler timData[10];
+extern tdTIMDataHandler timData[10];
 
 int bDrawHouses = 0;
 
@@ -183,29 +183,11 @@ int main(void)
 
     for(int i = 0; i<levelData_LVL_Lonchas.numActors; ++i)
     {
-        int timDataID = 0;
-        int bInitialized = 0;
-        for(int j=0;j<10;++j)
-        {
-            if(timData[j].tim_identifier == levelData_LVL_Lonchas.actors[i].meshData.texture_tim )
-            {
-                timDataID = j;
-                bInitialized = 1;
-                break;
-            }
-        }
-
-        if(!bInitialized)
-        {
-            TIM_IMAGE timImage;
-            dcRender_LoadTexture(&timImage, levelData_LVL_Lonchas.actors[i].meshData.texture_tim);
-            timData[timDataID].textureData.mode = timImage.mode;
-            timData[timDataID].textureData.crect = *timImage.crect;
-            timData[timDataID].textureData.prect = *timImage.prect;
-            timData[timDataID].tim_identifier = levelData_LVL_Lonchas.actors[i].meshData.texture_tim;
-        }
-
-        levelData_LVL_Lonchas.actors[i].meshData.mesh->textureData = timData[timDataID].textureData;
+        // Initialize texture data
+        SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded( levelData_LVL_Lonchas.actors[i].meshData.texture_tim);
+        levelData_LVL_Lonchas.actors[i].meshData.mesh->textureData = *textureData;
+        
+        // Initialize bounding box
         InitializeActorBoundingBoxBasedOnMesh(&levelData_LVL_Lonchas.actors[i]);
     }
 

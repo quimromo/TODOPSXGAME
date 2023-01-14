@@ -48,6 +48,7 @@ long MinSteering = 3;
 int PrevSteering = STEERING_NONE;
 
 extern int bEpicDebugMode;
+extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
 
 tdLoncha GetNewLoncha(void)
 {
@@ -64,7 +65,9 @@ void riverInitScene(tdGameMode* gameMode)
     nextLoncha = GetNewLoncha();
 
     Player.meshData.mesh = &barkitu_Mesh;
-    Player.meshData.mesh->textureData = timData[1].textureData;
+    Player.meshData.texture_tim = _binary_assets_textures_texturaEpica_tim_start;
+    SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded(Player.meshData.texture_tim);
+    Player.meshData.mesh->textureData = *textureData;
     Player.scale.vx = 4000;
     Player.scale.vy = 4000;
     Player.scale.vz = 4000;
