@@ -9,7 +9,7 @@
             "target": "localhost:3333",
             "preLaunchTask": "make",
             "remote": true,
-            "stopAtConnect": true,
+            "stopAtConnect": false,
             "executable": "MAIN.elf",
             "linux": {
                 "gdbpath": "/usr/bin/gdb-multiarch",
