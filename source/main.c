@@ -195,16 +195,6 @@ int main(void)
     RotMatrix(&rotation, &transform);
     TransMatrix(&transform, &translation);
 
-    for(int i = 0; i<levelData_LVL_Lonchas.numActors; ++i)
-    {
-        // Initialize texture data
-        SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded( levelData_LVL_Lonchas.actors[i].meshData.texture_tim);
-        levelData_LVL_Lonchas.actors[i].meshData.mesh->textureData = *textureData;
-        
-        // Initialize bounding box
-        InitializeActorBoundingBoxBasedOnMesh(&levelData_LVL_Lonchas.actors[i]);
-    }
-
     tdGameMode housesGameMode;
     housesGameMode.camera = &camera;
     housesGameMode.initFunction = NULL;

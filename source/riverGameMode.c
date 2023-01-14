@@ -3,7 +3,10 @@
 #include "dcMath.h"
 #include "TestTile.h"
 #include "assets/barkitu.h"
-
+#include "LVL_Loncha_00.h"
+#include "LVL_Loncha_01.h"
+#include "LVL_Loncha_02.h"
+#include "LVL_Loncha_03.h"
 #include <libetc.h>
 
 extern tdLoncha levelData_LVL_Lonchas;
@@ -27,8 +30,8 @@ enum ESteeringDirection
     STEERING_NONE
 };
 
-tdLoncha currentLoncha;
-tdLoncha nextLoncha;
+tdLoncha* currentLoncha;
+tdLoncha* nextLoncha;
 
 VECTOR lonchaOffset = {0};
 
@@ -47,17 +50,62 @@ long MaxSteering = 40;
 long MinSteering = 3;
 int PrevSteering = STEERING_NONE;
 
+int currentCinematicTime = 0;
+int totalCinematicDuration = 4096;
+char bCinematicMode = 0;
+
 extern int bEpicDebugMode;
 extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
 
-tdLoncha GetNewLoncha(void)
+tdLoncha* lonchasList[] = {
+    &levelData_LVL_Loncha_00,
+    &levelData_LVL_Loncha_01,
+    &levelData_LVL_Loncha_02,
+    &levelData_LVL_Loncha_03
+};
+
+int idInLonchasList = 0;
+
+// Loads texture data an computes meshes bounding boxes
+void InitializeLonchas()
 {
-    tdLoncha newLoncha = levelData_LVL_Lonchas;
+    int numLonchasInList = sizeof(lonchasList) / sizeof(lonchasList[0]);
+    for(int i = 0; i<numLonchasInList; ++i)
+    {
+        tdLoncha* loncha = lonchasList[i];
+        for(int j = 0; j<loncha->numActors; ++j)
+        {
+            // Initialize texture data
+            SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded( loncha->actors[i].meshData.texture_tim);
+            loncha->actors[i].meshData.mesh->textureData = *textureData;
+            
+            // Initialize bounding box
+            InitializeActorBoundingBoxBasedOnMesh(&loncha->actors[i]);
+        }
+    }
+}
+
+void IncrementLonchasListId()
+{
+    idInLonchasList++;
+    int numLonchasInList = sizeof(lonchasList) / sizeof(lonchasList[0]);
+    if(idInLonchasList >= numLonchasInList)
+    {
+        idInLonchasList = 0;
+    }
+}
+
+tdLoncha* GetNewLoncha(void)
+{
+    tdLoncha* newLoncha = lonchasList[idInLonchasList];
+    IncrementLonchasListId();
     return newLoncha;
 }
 
 void riverInitScene(tdGameMode* gameMode)
 {
+    InitializeLonchas();
+
     dcCamera_SetScreenResolution(gameMode->camera, SCREEN_WIDTH, SCREEN_HEIGHT);
     lonchaOffset = VECTOR_ZERO;
     lonchaOffset.vz -= offsetToChangeLoncha >> 2; // pivot is in the center, so we offset half the mesh
@@ -164,21 +212,29 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     long distanceY = cameraPosUnrealZ;
     long distanceZ = -cameraPosUnrealY;
 
-    dcCamera_SetCameraPosition(gameMode->camera, distanceX, distanceY, distanceZ);
-    dcCamera_LookAt(gameMode->camera, &VECTOR_ZERO);
+    if(bCinematicMode)
+    {
+
+    }
+    else
+    {
+        dcCamera_SetCameraPosition(gameMode->camera, distanceX, distanceY, distanceZ);
+        dcCamera_LookAt(gameMode->camera, &VECTOR_ZERO);
+    }
+   
 
     VECTOR NextLonchaOffset = lonchaOffset;
     NextLonchaOffset.vz -= offsetToChangeLoncha;
 
     // Draw the needed lonchas
-    DrawLoncha(&currentLoncha, lonchaOffset, render, gameMode->camera);
-    DrawLoncha(&nextLoncha, NextLonchaOffset, render, gameMode->camera);
+    DrawLoncha(currentLoncha, lonchaOffset, render, gameMode->camera);
+    DrawLoncha(nextLoncha, NextLonchaOffset, render, gameMode->camera);
 
     // If debugging draw collisions
     if(bEpicDebugMode)
     {
-        DrawLonchaCollisions(&currentLoncha, lonchaOffset, render, gameMode->camera);
-        DrawLonchaCollisions(&nextLoncha, NextLonchaOffset, render, gameMode->camera);
+        DrawLonchaCollisions(currentLoncha, lonchaOffset, render, gameMode->camera);
+        DrawLonchaCollisions(nextLoncha, NextLonchaOffset, render, gameMode->camera);
     }
 
     DrawActor(&Player,render,gameMode->camera);
