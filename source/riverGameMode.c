@@ -21,6 +21,10 @@ extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
 extern tdTIMDataHandler timData[];
 SDC_Camera riverCamera;
 
+SDC_Texture riverBackground;
+int riverBackgroundInitialized = 0;
+extern unsigned long _binary_assets_textures_sky_psx_tim_start[];
+
 tdGameMode riverGameMode = 
 {
     .camera = &riverCamera,
@@ -100,6 +104,8 @@ SVECTOR cameraPosOffset = {0};
 SVECTOR targetCameraLookAtOffset = {0};
 SVECTOR cameraLookAtOffset = {0};
 
+void DrawBackground(tdGameMode* gameMode, SDC_Render* render);
+
 // Loads texture data an computes meshes bounding boxes
 void InitializeLonchas()
 {
@@ -157,11 +163,20 @@ void OnPlayerObstacleHit()
 
 void riverInitScene(tdGameMode* gameMode)
 {
+    if (!riverBackgroundInitialized)
+    {
+        TIM_IMAGE timImage;
+        dcRender_LoadTexture(&timImage, _binary_assets_textures_sky_psx_tim_start);
+        riverBackground.mode = timImage.mode;
+        riverBackground.crect = *timImage.crect;
+        riverBackground.prect = *timImage.prect;
+        riverBackgroundInitialized = 1;
+    }
+    
     InitializeLonchas();
 
     dcCamera_SetScreenResolution(gameMode->camera, SCREEN_WIDTH, SCREEN_HEIGHT);
     lonchaOffset = VECTOR_ZERO;
-    lonchaOffset.vz -= offsetToChangeLoncha >> 2; // pivot is in the center, so we offset half the mesh
     currentLoncha = GetNewLoncha();
     nextLoncha = GetNewLoncha();
 
@@ -299,9 +314,9 @@ void riverUpdateScene(tdGameMode* gameMode)
 {
     CurrentFrame++;
 
-    int prevLonchaIdx = (offsetToChangeLoncha >> 2) + lonchaOffset.vz / offsetToChangeLoncha;
+    int prevLonchaIdx = ((offsetToChangeLoncha >> 2) + lonchaOffset.vz) / offsetToChangeLoncha;
     lonchaOffset.vz += scrollSpeed;
-    int newLonchaIdx = (offsetToChangeLoncha >> 2) + lonchaOffset.vz / offsetToChangeLoncha;
+    int newLonchaIdx = ((offsetToChangeLoncha >> 1) + lonchaOffset.vz) / offsetToChangeLoncha;
 
     if (prevLonchaIdx != newLonchaIdx)
     {
@@ -367,6 +382,8 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     DrawLoncha(currentLoncha, lonchaOffset, render, gameMode->camera);
     DrawLoncha(nextLoncha, NextLonchaOffset, render, gameMode->camera);
 
+    DrawBackground(gameMode, render);
+
     // If debugging draw collisions
     if(bEpicDebugMode)
     {
@@ -376,4 +393,23 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
 
     if (bPlayerVisible)
         DrawActor(&Player,render,gameMode->camera);
+}
+
+void DrawBackground(tdGameMode* gameMode, SDC_Render* render)
+{
+    SVECTOR frontVector = {gameMode->camera->viewMatrix.m[0][2], gameMode->camera->viewMatrix.m[1][2], gameMode->camera->viewMatrix.m[2][2] };
+    VectorNormalSS(&frontVector, &frontVector);
+
+    SVECTOR BgPos = {0};
+    BgPos.vx += gameMode->camera->position.vx;
+    BgPos.vy += gameMode->camera->position.vy;
+    BgPos.vz += gameMode->camera->position.vz;
+    BgPos.vx += frontVector.vx * (render->orderingTableCount - 5);
+    BgPos.vy += frontVector.vy * (render->orderingTableCount - 5);
+    BgPos.vz += frontVector.vz * (render->orderingTableCount - 5);
+
+    MATRIX transform;
+    dcCamera_ApplyCameraTransform(gameMode->camera, &transform, &transform);
+
+    dcRender_DrawBackground(render, &riverBackground, &transform, BgPos);
 }

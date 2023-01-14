@@ -1,4 +1,5 @@
 TEXTURES_LIST = \
 tileset.tim \
+./assets/textures/sky_psx.tim\
 ./assets/textures/waterTilesetFinal.tim \
 ./assets/textures/texturaEpica.tim 
