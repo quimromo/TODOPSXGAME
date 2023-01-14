@@ -2,10 +2,24 @@
 #include "tdGameplay.h"
 #include "lonchaBase.h"
 
+#include "obstacle01.h"
+
 extern unsigned long _binary_assets_textures_waterTileset_tim_start[];
 
 tdActor levelData_LVL_Lonchas_actors[] = {
 {.position = {0,0,0}, .meshData={.mesh=&lonchaBase_Mesh, .texture_tim=_binary_assets_textures_waterTileset_tim_start},
+.scale = {4000,4000,4000},
+.rotation={0, 0, 0}},
+{.position = {2090,-100,-3720}, .meshData={.mesh=&obstacle01_Mesh, .texture_tim=_binary_assets_textures_waterTileset_tim_start},
+.scale = {4000,4000,4000},
+.rotation={0, 0, 0}},
+{.position = {1810,-100,2900}, .meshData={.mesh=&obstacle01_Mesh, .texture_tim=_binary_assets_textures_waterTileset_tim_start},
+.scale = {4000,4000,4000},
+.rotation={0, 0, 0}},
+{.position = {-800,-100,-680}, .meshData={.mesh=&obstacle01_Mesh, .texture_tim=_binary_assets_textures_waterTileset_tim_start},
+.scale = {4000,4000,4000},
+.rotation={0, 0, 0}},
+{.position = {-2030,-100,2900}, .meshData={.mesh=&obstacle01_Mesh, .texture_tim=_binary_assets_textures_waterTileset_tim_start},
 .scale = {4000,4000,4000},
 .rotation={0, 0, 0}}
 };
