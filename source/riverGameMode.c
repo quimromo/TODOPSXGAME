@@ -52,11 +52,11 @@ int ImmunityDuration = 0;
 
 // Movement Variables
 int scrollSpeed = 65;
-long SteeringStep = 8;
-long FrictionStep = 4;
+long SteeringStep = 80;
+long FrictionStep = 40;
 
 short MaxRotationAngle = 30;
-long MaxSteering = 40;
+long MaxSteering = 200;
 long MinSteering = 3;
 int PrevSteering = STEERING_NONE;
 
@@ -91,6 +91,12 @@ tdLoncha* lonchasList[] = {
 };
 
 int idInLonchasList = 0;
+
+int cameraLagTime = 100;
+SVECTOR targetCameraPosOffset = {0};
+SVECTOR cameraPosOffset = {0};
+SVECTOR targetCameraLookAtOffset = {0};
+SVECTOR cameraLookAtOffset = {0};
 
 // Loads texture data an computes meshes bounding boxes
 void InitializeLonchas()
@@ -242,11 +248,40 @@ void updatePlayer()
     }
 
     //Update rotation
-    Player.rotation.vy = -CurrentSteering * 7;
+    Player.rotation.vy = (-CurrentSteering * 400 ) / MaxSteering;
 
     Player.position.vx += CurrentSteering;
 
     updatePlayerImmunity();
+}
+
+void updateCamera()
+{
+    targetCameraPosOffset.vx = Player.position.vx;
+    targetCameraLookAtOffset.vx = Player.position.vx;
+
+    cameraPosOffset.vx = DC_LERP(cameraPosOffset.vx, targetCameraPosOffset.vx, 512);
+    cameraPosOffset.vy = DC_LERP(cameraPosOffset.vy, targetCameraPosOffset.vy, 512);
+    cameraPosOffset.vz = DC_LERP(cameraPosOffset.vz, targetCameraPosOffset.vz, 512);
+    cameraLookAtOffset.vx = DC_LERP(cameraLookAtOffset.vx, targetCameraLookAtOffset.vx, 512);
+    cameraLookAtOffset.vy = DC_LERP(cameraLookAtOffset.vy, targetCameraLookAtOffset.vy, 512);
+    cameraLookAtOffset.vz = DC_LERP(cameraLookAtOffset.vz, targetCameraLookAtOffset.vz, 512);
+}
+
+void updateCinematic()
+{
+
+    if(bCinematicMode)
+    {
+        currentCinematicTime += 32;
+        if(currentCinematicTime >= totalCinematicDuration)
+        {
+            // Prevent cinematic going over total duration
+            currentCinematicTime = totalCinematicDuration;
+            // Stop cinematic mode
+            bCinematicMode = 0;
+        }
+    }
 }
 
 void riverUpdateScene(tdGameMode* gameMode)
@@ -265,19 +300,9 @@ void riverUpdateScene(tdGameMode* gameMode)
     }
 
     updatePlayer();
-
-    // Update cineamtic if needed
-    if(bCinematicMode)
-    {
-        currentCinematicTime += 32;
-        if(currentCinematicTime >= totalCinematicDuration)
-        {
-            // Prevent cinematic going over total duration
-            currentCinematicTime = totalCinematicDuration;
-            // Stop cinematic mode
-            bCinematicMode = 0;
-        }
-    }
+    updateCamera();
+     // Update cineamtic if needed
+    updateCinematic();
 }
 
 void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
@@ -317,8 +342,10 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     }
     else
     {
-        dcCamera_SetCameraPosition(gameMode->camera, distanceX, distanceY, distanceZ);
-        dcCamera_LookAt(gameMode->camera, &VECTOR_ZERO);
+        VECTOR cameraPos = {distanceX + cameraPosOffset.vx, distanceY + cameraPosOffset.vy, distanceZ + cameraPosOffset.vz};
+        VECTOR cameraLookAt = {cameraLookAtOffset.vx, cameraLookAtOffset.vy, cameraLookAtOffset.vz};
+        dcCamera_SetCameraPosition(gameMode->camera, cameraPos.vx, cameraPos.vy, cameraPos.vz);
+        dcCamera_LookAt(gameMode->camera, &cameraLookAt);
     }
 
     VECTOR NextLonchaOffset = lonchaOffset;
