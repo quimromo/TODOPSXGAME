@@ -2,6 +2,7 @@
 
 VECTOR VECTOR_UP = {0,ONE,0};
 VECTOR VECTOR_ZERO = {0,0,0};
+SVECTOR SVECTOR_ZERO = {0,0,0};
 
 VECTOR dcMath_Cross(const SVECTOR* v0, const SVECTOR* v1)
 {   
