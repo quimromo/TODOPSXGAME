@@ -59,14 +59,14 @@ void dcRender_Init(SDC_Render* render, int width, int height, CVECTOR bgColor, i
     SetDefDispEnv( &render->displayEnvironment[1], 0, 0,      width, height );
 
     setRGB0( &render->drawEnvironment[0], bgColor.r, bgColor.g, bgColor.b );
-    render->drawEnvironment[0].isbg = 1;
+    render->drawEnvironment[0].isbg = 0;
     render->drawEnvironment[0].dtd = 1;
-    render->displayEnvironment[0].isinter = 1;
+    render->displayEnvironment[0].isinter = 0;
 
     setRGB0( &render->drawEnvironment[1], bgColor.r, bgColor.g, bgColor.b );
-    render->drawEnvironment[1].isbg = 1;
+    render->drawEnvironment[1].isbg = 0;
     render->drawEnvironment[1].dtd = 1;
-    render->displayEnvironment[1].isinter = 1;
+    render->displayEnvironment[1].isinter = 0;
 
     SetDispMask(1);    
 	// Set GTE offset (recommended method  of centering)
