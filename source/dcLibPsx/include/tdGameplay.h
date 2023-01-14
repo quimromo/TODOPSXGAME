@@ -11,7 +11,6 @@ struct tdMesh;
 struct tdPhysicsData;
 struct tdBoundingBox;
 struct tdGameMode;
-struct SDC_Render;
 
 typedef void (*InitFunction)(struct tdGameMode* gameMode);
 typedef void (*UpdateLoopFunction)(struct tdGameMode*);
