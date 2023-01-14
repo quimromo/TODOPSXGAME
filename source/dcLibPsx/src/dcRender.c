@@ -556,9 +556,8 @@ void dcRender_DrawMesh(SDC_Render* render,  SDC_Mesh3D* mesh, MATRIX* transform,
     }
 }
 
-void dcRender_DrawBackground(SDC_Render* render, SDC_Texture* texture, MATRIX* transform, SVECTOR position)
+void dcRender_DrawBillboard(SDC_Render* render, SDC_Texture* texture, MATRIX* transform, SVECTOR position, SVECTOR size)
 {
-    //assert(render && transform);
     u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
     int orderingTableCount = render->orderingTableCount;
     long p, flg;
@@ -577,10 +576,37 @@ void dcRender_DrawBackground(SDC_Render* render, SDC_Texture* texture, MATRIX* t
     POLY_FT4* polyGT4 = (POLY_FT4*)poly;
     setPolyFT4(polyGT4);
 
-    setXY4(polyGT4, 0, 0, SCREEN_WIDTH, 0, 0, SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT);
+    setXY4(polyGT4,
+        spos.vx-size.vx, spos.vy-size.vy,
+        spos.vx+size.vx, spos.vy-size.vy,
+        spos.vx-size.vx, spos.vy+size.vy,
+        spos.vx+size.vx, spos.vy+size.vy);
     setRGB0(polyGT4, 128, 128, 128);
 
     polyGT4->tpage = getTPage(texture->mode, 0, texture->prect.x, texture->prect.y);
+    setClut(polyGT4, texture->crect.x, texture->crect.y);
+    setUVWH(polyGT4, texture->prect.x, texture->prect.y, texture->prect.w, texture->prect.h);
+
+    addPrim(&orderingTable[otz], polyGT4);
+    _dcRender_IncPrimitive(render, sizeof(POLY_FT4));
+}
+
+void dcRender_DrawBackground(SDC_Render* render, SDC_Texture* texture)
+{
+    //assert(render && transform);
+    u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
+    int orderingTableCount = render->orderingTableCount;
+    long otz = orderingTableCount - 1;
+
+    void *poly = render->nextPrimitive;
+
+    POLY_FT4* polyGT4 = (POLY_FT4*)poly;
+    setPolyFT4(polyGT4);
+
+    setXY4(polyGT4, 0, 0, SCREEN_WIDTH, 0, 0, SCREEN_HEIGHT >> 1, SCREEN_WIDTH, SCREEN_HEIGHT >> 1);
+    setRGB0(polyGT4, 128, 128, 128);
+
+    polyGT4->tpage = getTPage(texture->mode, 0, 640, 256);
     setClut(polyGT4, texture->crect.x, texture->crect.y);
     setUVWH(polyGT4, 0, 0, 128, 128);
 
