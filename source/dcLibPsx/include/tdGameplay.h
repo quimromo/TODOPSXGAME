@@ -10,6 +10,20 @@ struct tdActor;
 struct tdMesh;
 struct tdPhysicsData;
 struct tdBoundingBox;
+struct tdGameMode;
+struct SDC_Render;
+
+typedef void (*InitFunction)(struct tdGameMode* gameMode);
+typedef void (*UpdateLoopFunction)(struct tdGameMode*);
+typedef void (*DrawFunction)(struct tdGameMode*, SDC_Render* render);
+
+typedef struct tdGameMode{
+    SDC_Camera* camera;
+    InitFunction initFunction;
+    UpdateLoopFunction updateLoopFunction;
+    DrawFunction drawFunction;
+    char* name; 
+} tdGameMode;
 
 // Holds bounding box of the actor
 typedef struct tdBoundingBox{
@@ -38,6 +52,18 @@ typedef struct tdActor{
     tdPhysicsData physicsData;
     tdMesh meshData;
 } tdActor;
+
+typedef struct tdCollisionPlane
+{
+
+} tdCollisionPlane;
+
+typedef struct tdLoncha{
+    tdActor* actors;
+    int numActors;
+    tdCollisionPlane* collisions;
+    int numCollisions;
+} tdLoncha;
 
 // Draws and actor using a camera
 void DrawActor(tdActor* actor, SDC_Render* render,  SDC_Camera* camera);

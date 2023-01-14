@@ -4,3 +4,4 @@
 *.ps-exe
 *.map
 *.orig
+temp/**
