@@ -145,7 +145,7 @@ void dcRender_LoadTexture(TIM_IMAGE* tim, u_long* texture) {
     DrawSync(0);                                // Wait for drawing to end
 }
 
-void dcRender_DrawSpriteRect(SDC_Render* render, const TIM_IMAGE *tim, short x, short y, short w, short h, const DVECTOR *uv, const CVECTOR *color) {
+void dcRender_DrawSpriteRect(SDC_Render* render, SDC_Texture* texture, short x, short y, short w, short h, const DVECTOR *uv, const CVECTOR *color) {
     SPRT *sprt = (SPRT*)render->nextPrimitive;
 
     setSprt(sprt);
@@ -153,16 +153,38 @@ void dcRender_DrawSpriteRect(SDC_Render* render, const TIM_IMAGE *tim, short x, 
     setWH(sprt, w, h);
     setRGB0(sprt, color->r, color->g, color->b);
     setUV0(sprt, uv->vx, uv->vy);
-    setClut(sprt, tim->crect->x, tim->crect->y);
+    setClut(sprt, texture->crect.x, texture->crect.y);
 
     addPrim(render->orderingTable[render->doubleBufferIndex], sprt);
 
     _dcRender_IncPrimitive(render, sizeof(SPRT));
 
     DR_TPAGE *tpri = (DR_TPAGE*)render->nextPrimitive;
-    u_short tpage = getTPage(tim->mode, 0, tim->prect->x, tim->prect->y);
+    u_short tpage = getTPage(texture->mode, 0, texture->prect.x, texture->prect.y);
     setDrawTPage(tpri, 0, 0, tpage);
     addPrim(render->orderingTable[render->doubleBufferIndex], tpri);
+    _dcRender_IncPrimitive(render, sizeof(DR_TPAGE));
+}
+
+void dcRender_DrawSpriteBg(SDC_Render* render, SDC_Texture* texture, short x, short y, short w, short h, const DVECTOR *uv, const CVECTOR *color)
+{
+    SPRT *sprt = (SPRT*)render->nextPrimitive;
+
+    setSprt(sprt);
+    setXY0(sprt, x, y);
+    setWH(sprt, w, h);
+    setRGB0(sprt, color->r, color->g, color->b);
+    setUV0(sprt, uv->vx, uv->vy);
+    setClut(sprt, texture->crect.x, texture->crect.y);
+
+    addPrim(render->orderingTable[render->orderingTableCount - 1], sprt);
+
+    _dcRender_IncPrimitive(render, sizeof(SPRT));
+
+    DR_TPAGE *tpri = (DR_TPAGE*)render->nextPrimitive;
+    u_short tpage = getTPage(texture->mode, 0, texture->prect.x, texture->prect.y);
+    setDrawTPage(tpri, 0, 0, tpage);
+    addPrim(render->orderingTable[render->orderingTableCount - 1], tpri);
     _dcRender_IncPrimitive(render, sizeof(DR_TPAGE));
 }
 
@@ -425,6 +447,38 @@ void dcRender_DrawMesh(SDC_Render* render,  SDC_Mesh3D* mesh, MATRIX* transform,
             break;
         }
     }
+}
+
+void dcRender_DrawBackground(SDC_Render* render, SDC_Texture* texture, MATRIX* transform, SVECTOR position)
+{
+    assert(render && transform);
+    u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
+    int orderingTableCount = render->orderingTableCount;
+    long p, flg;
+
+    SetRotMatrix(transform);
+    SetTransMatrix(transform);
+
+    SVECTOR spos;
+    long otz = RotTransPers(&position, (long*)&spos.vx, &p, &flg);
+
+    if (p == 0) return;
+    if ((otz <= 0) || (otz >= orderingTableCount)) return;
+
+    void *poly = render->nextPrimitive;
+
+    POLY_FT4* polyGT4 = (POLY_FT4*)poly;
+    setPolyFT4(polyGT4);
+
+    setXY4(polyGT4, 0, 0, SCREEN_WIDTH, 0, 0, SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT);
+    setRGB0(polyGT4, 128, 128, 128);
+
+    polyGT4->tpage = getTPage(texture->mode, 0, texture->prect.x, texture->prect.y);
+    setClut(polyGT4, texture->crect.x, texture->crect.y);
+    setUVWH(polyGT4, 0, 0, 128, 128);
+
+    addPrim(&orderingTable[otz], polyGT4);
+    _dcRender_IncPrimitive(render, sizeof(POLY_FT4));
 }
 
 void dcRender_DrawLine(SDC_Render* render, SVECTOR* v0, SVECTOR* v1, MATRIX* transform, CVECTOR* color, u_short segments )

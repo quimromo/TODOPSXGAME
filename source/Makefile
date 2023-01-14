@@ -2,6 +2,7 @@ TARGET = MAIN
 TYPE = ps-exe
 
 SRCS = main.c tileset.tim ./assets/textures/waterTilesetSmall.tim ./assets/textures/texturaEpica.tim \
+		./assets/textures/sky_psx.tim\
 		../third_party/common/syscalls/printf.s \
 		../third_party/common/crt0/crt0.s \
 		dcLibPsx/src/dcMemory.c\
