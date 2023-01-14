@@ -1,6 +1,8 @@
 
 #include "dcCollision.h"
 #include "dcMath.h"
+#include <stdio.h>
+
 
 long dcCollision_RaySphereInteresct( VECTOR* rayOrigin, SVECTOR* rayDir, VECTOR* sphereCenter, long sphereRadius )
 {
@@ -53,27 +55,32 @@ long dcCollision_SpheresOverlap( VECTOR* sphere1Center, VECTOR* sphere2center, l
 long dcCollision_SphereAABBOverlap( VECTOR* boxHalfSize, VECTOR* boxCenter, VECTOR* sphereCenter, long sphereRadius )
 {
     VECTOR p = { .vx = sphereCenter->vx - boxCenter->vx, .vy = sphereCenter->vy - boxCenter->vy, .vz = sphereCenter->vz - boxCenter->vz };
-    p.vx = abs(p.vx) - boxCenter->vx;
-    p.vy = abs(p.vy) - boxCenter->vy;
-    p.vz = abs(p.vz) - boxCenter->vz;
+    p.vx = abs(p.vx) - boxHalfSize->vx;
+    p.vy = abs(p.vy) - boxHalfSize->vy;
+    p.vz = abs(p.vz) - boxHalfSize->vz;
 
     VECTOR maxP0 = { DC_MAX(p.vx, 0), DC_MAX(p.vy, 0), DC_MAX(p.vz, 0) };
-    return DC_LENGTH(&maxP0) + DC_MIN( DC_MAX(p.vx, DC_MAX(p.vy, p.vz)), 0 ) - sphereRadius;
+    long dist = DC_LENGTH(&maxP0) + DC_MIN( DC_MAX(p.vx, DC_MAX(p.vy, p.vz)), 0 ) - sphereRadius;
 
-    // float sdBox( vec3 p, vec3 b )
-    // {
-    // vec3 q = abs(p) - b;
-    // return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
-    // }
+    // printf("Sphere( p: %d, %d, %d r: %d ) collides with AABB( p: %d, %d, %d hs: %d %d %d) -> %s\n",
+    //     sphereCenter->vx, sphereCenter->vy, sphereCenter->vz, sphereRadius,
+    //     boxCenter->vx, boxCenter->vy, boxCenter->vz, boxHalfSize->vx, boxHalfSize->vy, boxHalfSize->vz,
+    //     dist < 0 ? "YES" : "NO"
+    // );
+
+    return dist;
 }
 
-long dcCollision_SphereBOXOverlap( VECTOR* boxHalfSize, MATRIX* boxTransform,  VECTOR* sphereCenter, long sphereRadius )
+long dcCollision_SphereBOXOverlap( VECTOR* boxHalfSize, MATRIX* boxInvTransform,  VECTOR* sphereCenter, long sphereRadius )
 {
     VECTOR transformedSphereCenter;
-    ApplyMatrixLV(boxTransform, sphereCenter, &transformedSphereCenter );
+    SetRotMatrix(boxInvTransform);
+    SetTransMatrix(boxInvTransform);
+    long flag;
+    TransRot_32(sphereCenter, &transformedSphereCenter, &flag);
 
-    VECTOR boxCenter = {0};
-    return dcCollision_SphereAABBOverlap(boxHalfSize, &boxCenter, sphereCenter, sphereRadius );
+    VECTOR boxCenter = { 0 };
+    return dcCollision_SphereAABBOverlap(boxHalfSize, &boxCenter, &transformedSphereCenter, sphereRadius );
 
 }
 
@@ -129,6 +136,7 @@ int dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape )
 {
     for(int i = 0; i < bf->numShapes; ++i)
     {
+        //printf("%d - OOBB at: ( %d, %d, %d )\n", i, bf->shapes[i].oobb.center.vx, bf->shapes[i].oobb.center.vy, bf->shapes[i].oobb.center.vz );
         if( dcCollision_shapesCollide(&bf->shapes[i], shape) )
         {
             return 1;
@@ -168,22 +176,24 @@ int dcCollision_shapesCollide(SDC_Shape* shapeA, SDC_Shape* shapeB)
                 .vy = shapeA->aabb.vmax.vy - center.vy,
                 .vz = shapeA->aabb.vmax.vz - center.vz
             };
-            return dcCollision_SphereAABBOverlap(&halfSize, &center, &shapeB->sphere.center, shapeB->sphere.radius);
+            return dcCollision_SphereAABBOverlap(&halfSize, &center, &shapeB->sphere.center, shapeB->sphere.radius) < 0;
         }
         case ST_OOBB:
         {
             MATRIX m = {0};
-            RotMatrix(&shapeA->oobb.rotation, &m );
-            TransMatrix( &m, &shapeA->oobb.center );
-            return dcCollision_SphereBOXOverlap(&shapeA->oobb.halfSize, &m, &shapeB->sphere.center, shapeB->sphere.radius);
+            SVECTOR invRot = {-shapeA->oobb.rotation.vx, -shapeA->oobb.rotation.vy, -shapeA->oobb.rotation.vz};
+            VECTOR invTrans = {-shapeA->oobb.center.vx, -shapeA->oobb.center.vy, -shapeA->oobb.center.vz};
+            
+            RotMatrix(&invRot, &m );
+            TransMatrix( &m, &invTrans );
+            return dcCollision_SphereBOXOverlap(&shapeA->oobb.halfSize, &m, &shapeB->sphere.center, shapeB->sphere.radius) < 0;
         }
         case ST_SPHERE:
         {
-            return dcCollision_SpheresOverlap( &shapeA->sphere.center, &shapeB->sphere.center, shapeA->sphere.radius, shapeB->sphere.radius );
+            return dcCollision_SpheresOverlap( &shapeA->sphere.center, &shapeB->sphere.center, shapeA->sphere.radius, shapeB->sphere.radius ) < 0;
         }
     }
 
     return 0;
 }
-
 

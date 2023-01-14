@@ -37,7 +37,7 @@ long distance = 800;
 long cameraHeight = 600;
 
 tdGameMode* currentGameMode = NULL;
-tdTIMDataHandler timData[10];
+extern tdTIMDataHandler timData[10];
 
 int bDrawHouses = 0;
 
@@ -47,19 +47,6 @@ int bEpicDebugMode = 0;
 SDC_Mesh3D* sphereMesh;
 
 SDC_Broadphase Broadphase;
-
-void DrawLoncha(tdLoncha* loncha, SDC_Render* render, SDC_Camera* camera)
-{
-    DrawActorArray(loncha->actors, loncha->numActors, render, camera, 0);
-}
-
-void DrawLonchaCollisions(tdLoncha* loncha, SDC_Render* render, SDC_Camera* camera)
-{
-    for (int i = 0; i < loncha->numCollisions; ++i)
-    {
-        DrawOOBBDebug(&loncha->collisions[i], render, camera);
-    }
-}
 
 void DrawHouses(SDC_Render* render, SDC_Camera* camera)
 {
@@ -100,7 +87,8 @@ void DrawHouses(SDC_Render* render, SDC_Camera* camera)
     dcCamera_SetCameraPosition(camera, distanceX+cameraOffset.vx, distanceY+cameraOffset.vy, distanceZ+cameraOffset.vz);
     dcCamera_LookAt(camera, &cameraLookAt);
 
-    DrawLoncha(&levelData_LVL_Lonchas, render, camera);
+    VECTOR lonchaOffset = {0};
+    DrawLoncha(&levelData_LVL_Lonchas, lonchaOffset, render, camera);
     if(bEpicDebugMode)
     {
         MATRIX sphereTransform = {0};
@@ -125,7 +113,7 @@ void DrawHouses(SDC_Render* render, SDC_Camera* camera)
 
 
         dcRender_DrawMesh( render, sphereMesh, &sphereTransform, &drawParams);
-        DrawLonchaCollisions(&levelData_LVL_Lonchas, render, camera);
+        DrawLonchaCollisions(&levelData_LVL_Lonchas, lonchaOffset, render, camera);
     }
 }
 
@@ -134,21 +122,10 @@ void HousesDrawFunction(tdGameMode* gameMode, SDC_Render* render)
     DrawHouses(render, gameMode->camera);
 }
 
-int prevSelectState = 0;
+
 void HousesUpdateLoop(tdGameMode* gameMode)
 {
-    u_long padState = PadRead(0);
 
-    int currentSelectState = (_PAD(0,PADselect ) & padState );
-
-    if(!currentSelectState && prevSelectState)
-    {
-        bEpicDebugMode = bEpicDebugMode ? 0 : 1;
-    }
-
-    prevSelectState = currentSelectState;
-
-    
 }
 
 void InitGameMode(tdGameMode* gameMode)
@@ -189,7 +166,13 @@ int main(void)
     {
         SDC_Shape shape;
         shape.shapeType = ST_OOBB;
-        shape.oobb = levelData_LVL_Lonchas.collisions[i];
+        shape.oobb.center = levelData_LVL_Lonchas.collisions[i].center;
+        shape.oobb.halfSize.vx = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vx);
+        shape.oobb.halfSize.vy = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vy);
+        shape.oobb.halfSize.vz = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vz);
+        shape.oobb.rotation = levelData_LVL_Lonchas.collisions[i].rotation;
+
+
         dcBF_addShape(&Broadphase, &shape);
 
     }
@@ -204,34 +187,6 @@ int main(void)
     RotMatrix(&rotation, &transform);
     TransMatrix(&transform, &translation);
 
-    for(int i = 0; i<levelData_LVL_Lonchas.numActors; ++i)
-    {
-        int timDataID = 0;
-        int bInitialized = 0;
-        for(int j=0;j<10;++j)
-        {
-            if(timData[j].tim_identifier == levelData_LVL_Lonchas.actors[i].meshData.texture_tim )
-            {
-                timDataID = j;
-                bInitialized = 1;
-                break;
-            }
-        }
-
-        if(!bInitialized)
-        {
-            TIM_IMAGE timImage;
-            dcRender_LoadTexture(&timImage, levelData_LVL_Lonchas.actors[i].meshData.texture_tim);
-            timData[timDataID].textureData.mode = timImage.mode;
-            timData[timDataID].textureData.crect = *timImage.crect;
-            timData[timDataID].textureData.prect = *timImage.prect;
-            timData[timDataID].tim_identifier = levelData_LVL_Lonchas.actors[i].meshData.texture_tim;
-        }
-
-        levelData_LVL_Lonchas.actors[i].meshData.mesh->textureData = timData[timDataID].textureData;
-        InitializeActorBoundingBoxBasedOnMesh(&levelData_LVL_Lonchas.actors[i]);
-    }
-
     tdGameMode housesGameMode;
     housesGameMode.camera = &camera;
     housesGameMode.initFunction = NULL;
@@ -241,6 +196,7 @@ int main(void)
     tdGameMode* gameModes[] = { &riverGameMode, &housesGameMode};
     u_long gameModeIdx = 0;
     u_long prevStartState = 0;
+    u_long prevSelectState = 0;
     InitGameMode(gameModes[gameModeIdx]);
 
     while (1)
@@ -260,6 +216,14 @@ int main(void)
             InitGameMode(gameModes[gameModeIdx]);
         }
         prevStartState = startState;
+
+        // Debug mode using select
+        int currentSelectState = (_PAD(0,PADselect ) & padState );
+        if(!currentSelectState && prevSelectState)
+        {
+            bEpicDebugMode = bEpicDebugMode ? 0 : 1;
+        }
+        prevSelectState = currentSelectState;
 
         // Update and draw the current game mode
         UpdateGameMode(gameModes[gameModeIdx]);

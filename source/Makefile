@@ -1,8 +1,9 @@
+include ./makeIncludes/textures
 TARGET = MAIN
 TYPE = ps-exe
 
-SRCS = main.c tileset.tim ./assets/textures/waterTilesetSmall.tim ./assets/textures/texturaEpica.tim \
-		./assets/textures/sky_psx.tim\
+SRCS = main.c \
+		${TEXTURES_LIST} \
 		../third_party/common/syscalls/printf.s \
 		../third_party/common/crt0/crt0.s \
 		dcLibPsx/src/dcMemory.c\
@@ -13,6 +14,7 @@ SRCS = main.c tileset.tim ./assets/textures/waterTilesetSmall.tim ./assets/textu
 		dcLibPsx/src/dcMisc.c\
 		dcLibPsx/src/tdGameplay.c\
 		riverGameMode.c\
+		tdConfig.c\
 
 CPPFLAGS += -I../third_party/common
 CPPFLAGS += -I../third_party/psyq/include

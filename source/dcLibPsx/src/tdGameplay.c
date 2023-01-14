@@ -7,6 +7,8 @@
 #include "dcMath.h"
 
 
+tdTIMDataHandler timData[10];
+
 void GetActorTransform(tdActor* actor, MATRIX* outTransform)
 {
     GetActorTransformOffset(actor, VECTOR_ZERO, outTransform);
@@ -72,6 +74,19 @@ void DrawActorArrayOffset(tdActor actorArray[], int numActors, VECTOR offset, SD
     }
 }
 
+void DrawLoncha(tdLoncha* loncha, VECTOR offset, SDC_Render* render, SDC_Camera* camera)
+{
+    DrawActorArrayOffset(loncha->actors, loncha->numActors, offset, render, camera, 0);
+}
+
+void DrawLonchaCollisions(tdLoncha* loncha, VECTOR offset, SDC_Render* render, SDC_Camera* camera)
+{
+    for (int i = 0; i < loncha->numCollisions; ++i)
+    {
+        DrawOOBBDebugOffset(&loncha->collisions[i], offset, render, camera);
+    }
+}
+
 void DrawBox(SVECTOR min, SVECTOR max, MATRIX* transform, SDC_Render* render,  SDC_Camera* camera, CVECTOR* drawColor)
 {
     // Cube vertexs
@@ -108,6 +123,21 @@ void DrawOOBBDebug(SDC_OOBB* oobb, SDC_Render* render,  SDC_Camera* camera)
     MATRIX transform = {0};
     RotMatrix(&oobb->rotation, &transform);
     TransMatrix(&transform, &oobb->center);
+    dcCamera_ApplyCameraTransform(camera, &transform, &transform);
+
+    SVECTOR min = { - oobb->halfSize.vx, -oobb->halfSize.vy, -oobb->halfSize.vz};
+    SVECTOR max = { oobb->halfSize.vx, oobb->halfSize.vy,  oobb->halfSize.vz};
+
+    CVECTOR drawColor = {255,255,60};
+    DrawBox(min, max, &transform, render, camera, &drawColor);
+}
+
+void DrawOOBBDebugOffset(SDC_OOBB* oobb, VECTOR offset, SDC_Render* render,  SDC_Camera* camera)
+{
+    MATRIX transform = {0};
+    VECTOR location = {oobb->center.vx + offset.vx, oobb->center.vy + offset.vy, oobb->center.vz + offset.vz};
+    RotMatrix(&oobb->rotation, &transform);
+    TransMatrix(&transform, &location);
     dcCamera_ApplyCameraTransform(camera, &transform, &transform);
 
     SVECTOR min = { - oobb->halfSize.vx, -oobb->halfSize.vy, -oobb->halfSize.vz};
@@ -255,4 +285,36 @@ void InitializeActorBoundingBoxBasedOnMesh(tdActor* actor)
     //printf("Bounding box:: min: %d %d %d max: %d %d %d\n", 
     //    boundingBox->min.vx, boundingBox->min.vy,boundingBox->min.vz,
     //    boundingBox->max.vx, boundingBox->max.vy,boundingBox->max.vz);
+}
+
+
+SDC_Texture* GetTextureDataAndLoadIfNeeded(u_long* tim_identifier)
+{
+    SDC_Texture* textureData = NULL;
+    int timDataID = 0;
+    int bInitialized = 0;
+    for(int j=0;j<10;++j)
+    {
+        if(timData[j].tim_identifier == tim_identifier )
+        {
+            timDataID = j;
+            bInitialized = 1;
+            break;
+        }
+    }
+
+    if(!bInitialized)
+    {
+        TIM_IMAGE timImage;
+        dcRender_LoadTexture(&timImage, tim_identifier);
+        timData[timDataID].textureData.mode = timImage.mode;
+        timData[timDataID].textureData.crect = *timImage.crect;
+        timData[timDataID].textureData.prect = *timImage.prect;
+        timData[timDataID].tim_identifier = tim_identifier;
+        
+    }
+    
+    textureData = &timData[timDataID].textureData;
+
+    return textureData;
 }
