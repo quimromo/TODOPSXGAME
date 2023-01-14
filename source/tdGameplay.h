@@ -58,7 +58,9 @@ typedef struct tdCollisionPlane
 
 typedef struct tdLoncha{
     tdActor* actors;
+    int numActors;
     tdCollisionPlane* collisions;
+    int numCollisions;
 } tdLoncha;
 
 // Draws and actor using a camera

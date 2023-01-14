@@ -15,7 +15,7 @@
 #include "dcMisc.h"
 
 #include "tdGameplay.h"
-#include "scenes/LVL_TestScene.h"
+#include "scenes/LVL_Lonchas.h"
 
 #define CUBESIZE 196 
 
@@ -179,8 +179,8 @@ void drawScene(tdGameMode* gameMode)
 void DrawHouses(SDC_Render* render, SDC_Camera* camera)
 {
     long cameraPosUnrealX = 0;
-    long cameraPosUnrealY = -2000;
-    long cameraPosUnrealZ = 1000;
+    long cameraPosUnrealY = -500;
+    long cameraPosUnrealZ = 200;
 
     long distanceX = -cameraPosUnrealX;
     long distanceY = cameraPosUnrealZ;
@@ -188,9 +188,8 @@ void DrawHouses(SDC_Render* render, SDC_Camera* camera)
 
     dcCamera_SetCameraPosition(camera, distanceX, distanceY, distanceZ);
     dcCamera_LookAt(camera, &VECTOR_ZERO);
-
-    int numActors = sizeof(levelData_LVL_TestScene) / sizeof(levelData_LVL_TestScene[0]);
-    DrawActorArray(levelData_LVL_TestScene, numActors, render, camera, 1);
+    
+    DrawActorArray(levelData_LVL_Lonchas.actors, levelData_LVL_Lonchas.numActors, render, camera, 1);
 }
 
 void HousesDrawFunction(tdGameMode* gameMode)
@@ -256,11 +255,10 @@ int main(void)
     TIM_IMAGE tim_tileset;
     dcRender_LoadTexture(&tim_tileset, _binary_tileset_tim_start);
 
-    int numActors = sizeof(levelData_LVL_TestScene) / sizeof(levelData_LVL_TestScene[0]);
-    for(int i = 0; i<numActors; ++i)
+    for(int i = 0; i<levelData_LVL_Lonchas.numActors; ++i)
     {
-        levelData_LVL_TestScene[i].meshData.mesh->tim = &tim_tileset;
-        InitializeActorBoundingBoxBasedOnMesh(&levelData_LVL_TestScene[i]);
+        levelData_LVL_Lonchas.actors[i].meshData.mesh->tim = &tim_tileset;
+        InitializeActorBoundingBoxBasedOnMesh(&levelData_LVL_Lonchas.actors[i]);
     }
 
     tdGameMode housesGameMode;
