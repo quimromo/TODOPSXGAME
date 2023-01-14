@@ -7,6 +7,7 @@
 #include <libgpu.h>
 #include <stdio.h>
 #include <types.h>
+#include <libapi.h>
 
 #include "dcMemory.h"
 #include "dcMath.h"
@@ -19,6 +20,11 @@
 #include "riverGameMode.h"
 #include "scenes/LVL_TestScene.h"
 #include "scenes/LVL_Lonchas.h"
+
+#define RCntIntr		0x1000				/*Interrupt mode*/
+unsigned int perftest_lastcounter; // the last sampled counter value
+unsigned int perftest_numcycles; // the number of completed test cycles
+unsigned int perftest_currtest; // which test is currently running
 
 SDC_Render render;
 SDC_DrawParams drawParams = {
@@ -155,6 +161,11 @@ void DrawGameMode(tdGameMode* gameMode, SDC_Render* render)
 int main(void) 
 {
     dcMemory_Init();
+
+    int CounterMaxValue = 240; /*This means this counter resets every 240 HBlanks*/
+    SetRCnt(RCntCNT1, CounterMaxValue, RCntIntr);
+    StartRCnt(RCntCNT1);
+
     PadInit(0);
     InitGeom();
     
@@ -182,7 +193,6 @@ int main(void)
     dcCamera_SetScreenResolution(&camera, SCREEN_WIDTH, SCREEN_HEIGHT);
     dcCamera_SetCameraPosition(&camera, 0, cameraHeight, distance);
     dcCamera_LookAt(&camera, &VECTOR_ZERO);
-
     
     RotMatrix(&rotation, &transform);
     TransMatrix(&transform, &translation);
@@ -199,9 +209,10 @@ int main(void)
     u_long prevSelectState = 0;
     InitGameMode(gameModes[gameModeIdx]);
 
+    int counterToUse = RCntCNT1;
+
     while (1)
     {
-
         // Cycle game-modes by pressing start
         u_long padState = PadRead(0);
         u_long startState = _PAD(0,PADstart ) & padState;
@@ -226,10 +237,22 @@ int main(void)
         prevSelectState = currentSelectState;
 
         // Update and draw the current game mode
+        int counterBeforeUpdate = GetRCnt(counterToUse);
         UpdateGameMode(gameModes[gameModeIdx]);
+        int counterAfterUpdate = GetRCnt(counterToUse);
+        int counterBeforeDraw = GetRCnt(counterToUse);
         DrawGameMode(gameModes[gameModeIdx], &render);
-
+        int counterAfterDraw = GetRCnt(counterToUse);
+        int counterBeforeSwap = GetRCnt(counterToUse);
         dcRender_SwapBuffers(&render);
+        int counterAfterSwap = GetRCnt(counterToUse);
+
+        int updateDuration = counterAfterUpdate - counterBeforeUpdate;
+        int drawDuration = counterAfterDraw - counterBeforeDraw;
+        int swapDuration = counterAfterSwap - counterBeforeSwap;
+
+        FntPrint("Update: %d Draw: %d Swap: %d", updateDuration, drawDuration, swapDuration);
+        
     }
 
     return 0;

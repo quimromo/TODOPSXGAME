@@ -31,7 +31,6 @@ LDFLAGS += -lcomb
 LDFLAGS += -lds
 LDFLAGS += -letc
 LDFLAGS += -lgpu
-LDFLAGS += -lgs
 LDFLAGS += -lgte
 LDFLAGS += -lgpu
 LDFLAGS += -lgun
