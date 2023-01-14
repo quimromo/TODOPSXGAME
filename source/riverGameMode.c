@@ -52,12 +52,14 @@ int ImmunityDuration = 0;
 
 // Movement Variables
 int scrollSpeed = 65;
-long SteeringStep = 80;
-long FrictionStep = 40;
+int maxScrollSpeed = 300;
+int scrollSpeedIncreasePerLoncha = 60;
+long SteeringStep = 100;
+long FrictionStep = 70;
 
 short MaxRotationAngle = 30;
-long MaxSteering = 200;
-long MinSteering = 3;
+long MaxSteering = 300;
+long MinSteering = 40;
 int PrevSteering = STEERING_NONE;
 
 int currentCinematicTime = 0;
@@ -117,6 +119,14 @@ void InitializeLonchas()
     }
 }
 
+void IncrementScrollSpeed()
+{
+    scrollSpeed += scrollSpeedIncreasePerLoncha;
+    if(scrollSpeed > maxScrollSpeed)
+    {
+        scrollSpeed = maxScrollSpeed;
+    }
+}
 void IncrementLonchasListId()
 {
     idInLonchasList++;
@@ -131,6 +141,7 @@ tdLoncha* GetNewLoncha(void)
 {
     tdLoncha* newLoncha = lonchasList[idInLonchasList];
     IncrementLonchasListId();
+    
     return newLoncha;
 }
 
@@ -297,6 +308,7 @@ void riverUpdateScene(tdGameMode* gameMode)
         currentLoncha = nextLoncha;
         nextLoncha = GetNewLoncha();
         lonchaOffset.vz -= offsetToChangeLoncha;
+        IncrementScrollSpeed();
     }
 
     updatePlayer();
