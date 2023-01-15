@@ -29,6 +29,8 @@
 #define JUMP_FORCE 300
 #define GRAVITY_FORCE 50
 
+#define USER_DATA_WALL 1
+
 extern SDC_Broadphase Broadphase;
 
 SDC_Camera* RiverGameModeCamera;
@@ -185,6 +187,7 @@ void registerLonchaObstacles(tdLoncha* Loncha)
         shape.oobb.halfSize.vy = abs(Loncha->collisions[i].halfSize.vy);
         shape.oobb.halfSize.vz = abs(Loncha->collisions[i].halfSize.vz);
         shape.oobb.rotation = Loncha->collisions[i].rotation;
+        shape.userData = Loncha->collisions[i].userData;
 
         CurrentObstacles[numObstacles] = dcBF_addShape(&Broadphase, &shape);
         numObstacles++;   
@@ -213,15 +216,21 @@ tdLoncha* GetNewLoncha(void)
     return newLoncha;
 }
 
-void OnPlayerObstacleHit()
+void OnPlayerObstacleHit(SDC_Shape* Other)
 {
-    if (bImmune || VerticalAcceleration!=0)
-        return;
-
-    CurrImmunityFrames = 0;
-    ImmunityDuration = HIT_IMMUNITY_DURATION;
-    bImmune = 1;
-    scrollSpeed = MIN_SCROLL_SPEED;
+    if (Other->userData == USER_DATA_WALL)
+    {
+        CurrentSteering = Player.position.vx < 0 ? MaxSteering : -MaxSteering; 
+    }
+    else
+    {
+        if (bImmune || VerticalAcceleration!=0)
+            return;
+        CurrImmunityFrames = 0;
+        ImmunityDuration = HIT_IMMUNITY_DURATION;
+        bImmune = 1;
+        scrollSpeed = MIN_SCROLL_SPEED;
+    }
 }
 
 void riverInitScene(tdGameMode* gameMode)
@@ -292,9 +301,10 @@ void updateCollisions()
     sphereShape.sphere.center.vz -= COLLISION_FRONT_OFFSET;
     sphereShape.sphere.radius = PLAYER_HITBOX_SIZE;
 
-    if( dcBF_shapeCollides(&Broadphase, &sphereShape ,RiverGameModeRender, RiverGameModeCamera ) )
+    SDC_Shape* CollResult = dcBF_shapeCollides(&Broadphase, &sphereShape ,RiverGameModeRender, RiverGameModeCamera );
+    if( CollResult )
     {
-        OnPlayerObstacleHit();
+        OnPlayerObstacleHit(CollResult);
     }
 }
 
