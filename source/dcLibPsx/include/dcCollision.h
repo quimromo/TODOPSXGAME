@@ -33,7 +33,7 @@ typedef struct
     VECTOR center;
     VECTOR halfSize;
     SVECTOR rotation;
-
+    int userData;
 } SDC_OOBB;
 
 typedef struct

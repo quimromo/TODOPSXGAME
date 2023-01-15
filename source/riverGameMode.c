@@ -55,9 +55,9 @@ int CurrImmunityFrames = 0;
 int ImmunityDuration = 0;
 
 // Movement Variables
-int scrollSpeed = 65;
+int scrollSpeed = 90;
 int maxScrollSpeed = 300;
-int scrollSpeedIncreasePerLoncha = 60;
+int scrollSpeedIncreasePerLoncha = 65;
 long SteeringStep = 100;
 long FrictionStep = 70;
 
@@ -67,7 +67,7 @@ long MinSteering = 40;
 int PrevSteering = STEERING_NONE;
 
 int currentCinematicTime = 0;
-int totalCinematicDuration = 2048;
+int totalCinematicDuration = 3000;
 SVECTOR introCinematicPath[] = {
     {0, 310, 1160},
     {-740, 370, 340+1000},
@@ -87,7 +87,7 @@ SVECTOR introCinematicLookAt[] = {
 char bCinematicMode = 0;
 
 extern int bEpicDebugMode;
-extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
+extern unsigned long _binary_assets_textures_T_Vapor_hull_tim_start[];
 
 tdLoncha* lonchasList[] = {
     &levelData_LVL_Loncha_00,
@@ -181,7 +181,7 @@ void riverInitScene(tdGameMode* gameMode)
     nextLoncha = GetNewLoncha();
 
     Player.meshData.mesh = &td_VAPOR_hull_Mesh;
-    Player.meshData.texture_tim = _binary_assets_textures_texturaEpica_tim_start;
+    Player.meshData.texture_tim = _binary_assets_textures_T_Vapor_hull_tim_start;
     SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded(Player.meshData.texture_tim);
     Player.meshData.mesh->textureData = *textureData;
     Player.scale.vx = 4000;
@@ -392,7 +392,10 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     }
 
     if (bPlayerVisible)
-        DrawActor(&Player,render,gameMode->camera);
+    {
+        VECTOR playerOffset = {0,80,0};
+        DrawActorOffset(&Player, playerOffset, render,gameMode->camera);
+    }
 }
 
 void DrawBackground(tdGameMode* gameMode, SDC_Render* render)
