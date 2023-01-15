@@ -262,7 +262,12 @@ void DamagePlayer(void)
 
     if (NumLives <= 0)
     {
+        SetCapitanState(GAMEOVER);
         // TODO: game over
+    }
+    else
+    {
+        SetCapitanState(DAMAGE);
     }
 }
 
@@ -272,6 +277,7 @@ void OnPlayerObstacleHit(SDC_Shape* Other)
     {
         //At the moment harcoded in PlayerUpdate
         //CorrectUserLocation();
+        SetCapitanState(DAMAGE);
     }
     else
     {
@@ -281,13 +287,13 @@ void OnPlayerObstacleHit(SDC_Shape* Other)
         ImmunityDuration = HIT_IMMUNITY_DURATION;
         bImmune = 1;
         scrollSpeed = MIN_SCROLL_SPEED;
+
         DamagePlayer();
 
         // Increase scroll speed per loncha after first hit to get back to action faster
         scrollSpeedIncreasePerLoncha = scrollSpeedIncreasePerLonchaAfterFirstHit;
     }
 
-    SetCapitanState(DAMAGE);
 }
 
 void riverInitScene(tdGameMode* gameMode)
