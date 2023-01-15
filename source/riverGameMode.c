@@ -241,7 +241,8 @@ void riverInitScene(tdGameMode* gameMode)
         riverUI.captainDefaultAnim.frames = &defaultCptAnimFrames[0];
         riverUI.captainDrawLocation.x = 5;
         riverUI.captainDrawLocation.y = 171;
-        riverUI.captainDrawLocation.w = riverUI.captainDrawLocation.h = 64;
+        riverUI.captainDrawLocation.h = 64;
+        riverUI.captainDrawLocation.w = 128;
 
         riverUI.captainSprite.currAnimation = &riverUI.captainDefaultAnim;
         riverUI.captainSprite.currAnimFrame = 0;
@@ -518,18 +519,7 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
 
 void riverDrawUI(tdGameMode* gameMode, SDC_Render* render)
 {
-    DVECTOR uvs = { .vx = 0, .vy = 0};
-    CVECTOR color = { 127, 127, 127 };
-    dcRender_DrawSpriteRect(
-        render, 
-        &riverUI.captainDefaultAnim.timImage, 
-        riverUI.captainDrawLocation.x, 
-        riverUI.captainDrawLocation.y,
-        riverUI.captainDrawLocation.w,
-        riverUI.captainDrawLocation.h,
-        &uvs,
-        &color
-    );
+    dcRender_DrawQuad(render, &riverUI.captainDefaultAnim.timImage, &riverUI.captainDrawLocation);
 
 }
 

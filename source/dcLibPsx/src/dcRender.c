@@ -151,8 +151,8 @@ void dcRender_DrawSpriteRect(SDC_Render* render, SDC_Texture* texture, short x, 
 
     // X align 64 -> 6
     // Y align 256 --> 8
-    u_short tpageX = texture->prect.x & !0x003f;
-    u_short tpageY = texture->prect.y & !0x00ff;
+    u_short tpageX = texture->prect.x & ~0x003f;
+    u_short tpageY = texture->prect.y & ~0x00ff;
 
     setSprt(sprt);
     setXY0(sprt, x, y);
@@ -612,6 +612,40 @@ void dcRender_DrawBackground(SDC_Render* render, SDC_Texture* texture)
     addPrim(&orderingTable[otz], polyGT4);
     _dcRender_IncPrimitive(render, sizeof(POLY_FT4));
 }
+
+void dcRender_DrawQuad(SDC_Render* render, SDC_Texture* texture, RECT* screenLocation)
+{
+    //assert(render && transform);
+    u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
+    long otz = 1;
+
+    void *poly = render->nextPrimitive;
+
+    POLY_FT4* polyGT4 = (POLY_FT4*)poly;
+    setPolyFT4(polyGT4);
+
+    setXY4(
+        polyGT4, 
+        screenLocation->x, screenLocation->y, 
+        screenLocation->x + screenLocation->w, screenLocation->y, 
+        screenLocation->x, screenLocation->y + screenLocation->h, 
+        screenLocation->x + screenLocation->w, screenLocation->y + screenLocation->h
+    );
+    
+    setRGB0(polyGT4, 128, 128, 128);
+
+    u_short tpageX = texture->prect.x & ~0x003f;
+    u_short tpageY = texture->prect.y & ~0x00ff;
+
+    polyGT4->tpage = getTPage(texture->mode, 0, tpageX, tpageY);
+    setClut(polyGT4, texture->crect.x, texture->crect.y);
+    setUVWH(polyGT4, texture->prect.x & 0x003f, texture->prect.y & 0x00ff, texture->prect.w, texture->prect.h);
+
+    addPrim(&orderingTable[otz], polyGT4);
+    _dcRender_IncPrimitive(render, sizeof(POLY_FT4));
+}
+
+
 
 void dcRender_DrawLine(SDC_Render* render, SVECTOR* v0, SVECTOR* v1, MATRIX* transform, CVECTOR* color, u_short segments )
 {
