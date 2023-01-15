@@ -20,11 +20,14 @@
 
 #define PLAYER_HITBOX_SIZE 30
 
+#define JUMP_FORCE 300
+
 extern SDC_Broadphase Broadphase;
 
 SDC_Camera* RiverGameModeCamera;
 SDC_Render* RiverGameModeRender;
 
+int bLoadedPhisicsLoncha = 0;
 
 extern tdLoncha levelData_LVL_Lonchas;
 extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
@@ -69,6 +72,7 @@ long CurrentSteering = 0;
 int bImmune = 0;
 int CurrImmunityFrames = 0;
 int ImmunityDuration = 0;
+long VerticalAcceleration = 0;
 
 // Movement Variables
 int scrollSpeed = 65;
@@ -333,6 +337,11 @@ void updatePlayer()
         }
     }
 
+    // if( _PAD(0,PADh ) & padState )
+    // {
+    //     Player.position.vy += VerticalAcceleration;
+    // }
+
     //Update rotation
     Player.rotation.vy = (-CurrentSteering * 400 ) / MaxSteering;
 
@@ -386,10 +395,12 @@ void riverUpdateScene(tdGameMode* gameMode)
         nextLoncha = GetNewLoncha();
         lonchaOffset.vz -= offsetToChangeLoncha;
         IncrementScrollSpeed();
+        bLoadedPhisicsLoncha = 0;
     }
 
-    if (lonchaOffset.vz > offsetToChangeLoncha >> 1 && currentPhisicsLoncha != nextLoncha && nextLoncha)
+    if (lonchaOffset.vz > offsetToChangeLoncha >> 1 && !bLoadedPhisicsLoncha && nextLoncha)
     {
+        bLoadedPhisicsLoncha = 1;
         currentPhisicsLoncha = nextLoncha;
         ClearObstacles();
         registerLonchaObstacles(currentPhisicsLoncha);
