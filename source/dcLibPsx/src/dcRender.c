@@ -617,6 +617,32 @@ void dcRender_DrawBackground(SDC_Render* render, SDC_Texture* texture)
     _dcRender_IncPrimitive(render, sizeof(POLY_FT4));
 }
 
+void dcRender_DrawTitle(SDC_Render* render, SDC_Texture* texture)
+{
+    //assert(render && transform);
+    u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
+    long otz = 1;
+
+    void *poly = render->nextPrimitive;
+
+    POLY_FT4* polyGT4 = (POLY_FT4*)poly;
+    setPolyFT4(polyGT4);
+
+    setXY4(polyGT4, 0, 0, SCREEN_WIDTH, 0, 0, SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT);
+    setRGB0(polyGT4, 128, 128, 128);
+
+    polyGT4->tpage = getTPage(texture->mode, 0, 768, 128);
+    setClut(polyGT4, texture->crect.x, texture->crect.y);
+    setUVWH(polyGT4, 0, 127, 128, 128);
+	//polyGT4->u0 = 0;   polyGT4->v0 = 128;				
+	//polyGT4->u1 = 128;  polyGT4->v1 = 128;				
+	//polyGT4->u2 = 0;   polyGT4->v2 = 255;			
+	//polyGT4->u3 = 128; polyGT4->v3 = 255;
+
+    addPrim(&orderingTable[otz], polyGT4);
+    _dcRender_IncPrimitive(render, sizeof(POLY_FT4));
+}
+
 void dcRender_DrawQuad(SDC_Render* render, SDC_Texture* texture, RECT* screenLocation)
 {
     //assert(render && transform);

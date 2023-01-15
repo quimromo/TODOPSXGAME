@@ -137,6 +137,7 @@ void dcRender_DrawMesh(SDC_Render* render,  SDC_Mesh3D* mesh, MATRIX* transform,
 void dcRender_DrawLine(SDC_Render* render, SVECTOR* v0, SVECTOR* v1, MATRIX* transform, CVECTOR* color, u_short segments);
 void dcRender_DrawBillboard(SDC_Render* render, SDC_Texture* texture, MATRIX* transform, SVECTOR position, SVECTOR size);
 void dcRender_DrawBackground(SDC_Render* render, SDC_Texture* texture);
+void dcRender_DrawTitle(SDC_Render* render, SDC_Texture* texture);
 void dcRender_DrawQuad(SDC_Render* render, SDC_Texture* texture, RECT* screenLocation);
 
 /********** Light helper functions **********/

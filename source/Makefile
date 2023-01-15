@@ -17,6 +17,7 @@ SRCS = main.c \
 		dcLibPsx/src/tdGameplay.c\
 		dcLibPsx/src/dcAudio.c\
 		riverGameMode.c\
+		titleGameMode.c\
 		tdConfig.c\
 
 CPPFLAGS += -I../third_party/common
