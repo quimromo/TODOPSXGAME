@@ -537,6 +537,21 @@ void updatePlayer(void)
         VerticalAcceleration = JUMP_FORCE;
     }
 
+    if( _PAD(0,PADRdown ) & padState && Player.position.vy == 0)
+    {
+        VerticalAcceleration = JUMP_FORCE;
+    }
+
+    if( _PAD(0,PADRup ) & padState && Player.position.vy == 0)
+    {
+        VerticalAcceleration = JUMP_FORCE;
+    }
+
+    if( _PAD(0,PADRleft ) & padState && Player.position.vy == 0)
+    {
+        VerticalAcceleration = JUMP_FORCE;
+    }
+
     if (Player.position.vy > 0)
     {   
         if (VerticalAcceleration> 0)
