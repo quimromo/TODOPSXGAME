@@ -7,6 +7,10 @@
 #include "LVL_Loncha_01.h"
 #include "LVL_Loncha_02.h"
 #include "LVL_Loncha_03.h"
+#include "LVL_Loncha_04.h"
+#include "LVL_Loncha_05.h"
+#include "LVL_Loncha_06.h"
+#include "LVL_NewLoncha_00.h"
 #include "tdConfig.h"
 #include <libetc.h>
 #include <stdio.h>
@@ -15,12 +19,17 @@
 #define HIT_IMMUNITY_DURATION 60
 #define WALL HIT_IMMUNITY_DURATION 30
 
+#define COLLISION_FRONT_OFFSET 400
+
 #define MAX_OBSTACLES_PER_LONCHA 50
 #define MIN_SCROLL_SPEED 65
 
 #define PLAYER_HITBOX_SIZE 30
 
 #define JUMP_FORCE 300
+#define GRAVITY_FORCE 50
+
+#define USER_DATA_WALL 1
 
 extern SDC_Broadphase Broadphase;
 
@@ -119,7 +128,10 @@ tdLoncha* lonchasList[] = {
     &levelData_LVL_Loncha_00,
     &levelData_LVL_Loncha_01,
     &levelData_LVL_Loncha_02,
-    &levelData_LVL_Loncha_03
+    &levelData_LVL_Loncha_03,
+    &levelData_LVL_Loncha_04,
+    &levelData_LVL_Loncha_05,
+    &levelData_LVL_Loncha_06,
 };
 
 int idInLonchasList = 0;
@@ -178,6 +190,7 @@ void registerLonchaObstacles(tdLoncha* Loncha)
         shape.oobb.halfSize.vy = abs(Loncha->collisions[i].halfSize.vy);
         shape.oobb.halfSize.vz = abs(Loncha->collisions[i].halfSize.vz);
         shape.oobb.rotation = Loncha->collisions[i].rotation;
+        shape.userData = Loncha->collisions[i].userData;
 
         CurrentObstacles[numObstacles] = dcBF_addShape(&Broadphase, &shape);
         numObstacles++;   
@@ -206,15 +219,21 @@ tdLoncha* GetNewLoncha(void)
     return newLoncha;
 }
 
-void OnPlayerObstacleHit()
+void OnPlayerObstacleHit(SDC_Shape* Other)
 {
-    if (bImmune)
-        return;
-
-    CurrImmunityFrames = 0;
-    ImmunityDuration = HIT_IMMUNITY_DURATION;
-    bImmune = 1;
-    scrollSpeed = MIN_SCROLL_SPEED;
+    if (Other->userData == USER_DATA_WALL)
+    {
+        CurrentSteering = Player.position.vx < 0 ? MaxSteering : -MaxSteering; 
+    }
+    else
+    {
+        if (bImmune || VerticalAcceleration!=0)
+            return;
+        CurrImmunityFrames = 0;
+        ImmunityDuration = HIT_IMMUNITY_DURATION;
+        bImmune = 1;
+        scrollSpeed = MIN_SCROLL_SPEED;
+    }
 }
 
 void riverInitScene(tdGameMode* gameMode)
@@ -304,18 +323,21 @@ void updateCollisions()
 {
     SDC_Shape sphereShape;
     sphereShape.shapeType = ST_SPHERE;
-    sphereShape.sphere.center = Player.position; 
+    sphereShape.sphere.center = Player.position;
+    sphereShape.sphere.center.vz -= COLLISION_FRONT_OFFSET;
     sphereShape.sphere.radius = PLAYER_HITBOX_SIZE;
 
-    if( dcBF_shapeCollides(&Broadphase, &sphereShape ,RiverGameModeRender, RiverGameModeCamera ) )
+    SDC_Shape* CollResult = dcBF_shapeCollides(&Broadphase, &sphereShape ,RiverGameModeRender, RiverGameModeCamera );
+    if( CollResult )
     {
-        OnPlayerObstacleHit();
+        OnPlayerObstacleHit(CollResult);
     }
 }
 
 void updatePlayer()
 {
     int bSteeringInThisFrame = 0;
+    int FrameSteeringStep = VerticalAcceleration==0 ? SteeringStep : SteeringStep >> 2;
     
     u_long padState = PadRead(0);
     if( _PAD(0,PADLright ) & padState )
@@ -326,7 +348,7 @@ void updatePlayer()
         }
         else if (PrevSteering == STEERING_RIGHT)
         {
-            CurrentSteering += SteeringStep;
+            CurrentSteering += FrameSteeringStep;
             if (CurrentSteering > MaxSteering)
             {
                 CurrentSteering = MaxSteering;
@@ -343,7 +365,7 @@ void updatePlayer()
         }
         else if (PrevSteering == STEERING_LEFT)
         {
-            CurrentSteering -= SteeringStep;
+            CurrentSteering -= FrameSteeringStep;
             if (CurrentSteering < -MaxSteering)
             {
                 CurrentSteering = -MaxSteering;
@@ -365,13 +387,31 @@ void updatePlayer()
         }
     }
 
-    // if( _PAD(0,PADh ) & padState )
-    // {
-    //     Player.position.vy += VerticalAcceleration;
-    // }
+    if( _PAD(0,PADRright ) & padState && Player.position.vy == 0)
+    {
+        VerticalAcceleration = JUMP_FORCE;
+    }
 
+    if (Player.position.vy > 0)
+    {   
+        if (VerticalAcceleration> 0)
+        {
+            VerticalAcceleration-=GRAVITY_FORCE;
+        }else{
+            VerticalAcceleration-=GRAVITY_FORCE >> 2;
+        }
+    }
+
+    Player.position.vy += VerticalAcceleration;
+
+    if (Player.position.vy < 0)
+    {
+        Player.position.vy = 0;
+        VerticalAcceleration = 0;
+    }
     //Update rotation
     Player.rotation.vy = (-CurrentSteering * 400 ) / MaxSteering;
+    Player.rotation.vx = (VerticalAcceleration );
 
     Player.position.vx += CurrentSteering;
 

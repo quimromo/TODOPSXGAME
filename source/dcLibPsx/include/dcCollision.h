@@ -62,6 +62,7 @@ typedef struct
         SDC_Sphere sphere;
     };
     unsigned shapeId;
+    int userData;
 } SDC_Shape;
 
 typedef struct
