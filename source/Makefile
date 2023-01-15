@@ -1,9 +1,11 @@
 include ./makeIncludes/textures
+include ./makeIncludes/sfx
 TARGET = MAIN
 TYPE = ps-exe
 
 SRCS = main.c \
 		${TEXTURES_LIST} \
+		${AUDIO_LIST} \
 		../third_party/common/syscalls/printf.s \
 		../third_party/common/crt0/crt0.s \
 		dcLibPsx/src/dcMemory.c\
@@ -13,6 +15,7 @@ SRCS = main.c \
 		dcLibPsx/src/dcCollision.c\
 		dcLibPsx/src/dcMisc.c\
 		dcLibPsx/src/tdGameplay.c\
+		dcLibPsx/src/dcAudio.c\
 		riverGameMode.c\
 		titleGameMode.c\
 		tdConfig.c\
@@ -45,6 +48,7 @@ LDFLAGS += -lsio
 LDFLAGS += -lsnd
 LDFLAGS += -lspu
 LDFLAGS += -ltap
+LDFLAGS += -lcd
 LDFLAGS += -Wl,--end-group
 
 include ../third_party/common.mk

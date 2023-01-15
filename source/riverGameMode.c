@@ -15,10 +15,13 @@
 #include "LVL_Loncha_09.h"
 #include "LVL_Loncha_10.h"
 #include "LVL_Loncha_11.h"
-#include "LVL_NewLoncha_00.h"
+#include "LVL_Loncha_12.h"
+#include "LVL_Loncha_13.h"
+#include "LVL_Loncha_casaRuben.h"
 #include "tdConfig.h"
 #include <libetc.h>
 #include <stdio.h>
+#include "dcAudio.h"
 
 #define IMMUNITY_BLINK_RATE 3
 #define HIT_IMMUNITY_DURATION 60
@@ -39,6 +42,10 @@
 
 extern SDC_Broadphase Broadphase;
 
+extern SDC_Sfx hitSfx;
+extern SDC_Sfx wallHitSfx;
+extern SDC_Sfx jumpSfx;
+
 SDC_Camera* RiverGameModeCamera;
 SDC_Render* RiverGameModeRender;
 
@@ -46,6 +53,7 @@ int bLoadedPhisicsLoncha = 0;
 
 extern tdLoncha levelData_LVL_Lonchas;
 extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
+extern SDC_Audio audio;
 
 extern tdTIMDataHandler timData[];
 SDC_Camera riverCamera;
@@ -150,7 +158,12 @@ extern int bEpicDebugMode;
 extern unsigned long _binary_assets_textures_T_Vapor_hull_tim_start[];
 
 // Used to select from available lonchas
-int maxLonchaFromList = 7;
+#define INITIAL_LOCNCHAS_IDX 7
+#define SECOND_LOCNCHAS_IDX 11
+#define THIRD_LOCNCHAS_IDX 14
+#define RUBENCHOUSE_LOCNCHAS_IDX 15
+
+int maxLonchaFromList = INITIAL_LOCNCHAS_IDX;
 
 // Order matters
 tdLoncha* lonchasList[] = {
@@ -163,11 +176,15 @@ tdLoncha* lonchasList[] = {
     &levelData_LVL_Loncha_06, // 7
 
     &levelData_LVL_Loncha_08,
-    &levelData_LVL_Loncha_10, // 9
+    &levelData_LVL_Loncha_10,
+    &levelData_LVL_Loncha_12,
+    &levelData_LVL_Loncha_13, // 11
 
     &levelData_LVL_Loncha_07,
     &levelData_LVL_Loncha_09,
-    &levelData_LVL_Loncha_11  // 12
+    &levelData_LVL_Loncha_11,  // 14
+
+    &levelData_LVL_Loncha_casaRuben  // 15
 };
 
 int idInLonchasList = 0;
@@ -261,6 +278,7 @@ tdLoncha* GetNewLoncha(void)
 void CorrectUserLocation()
 {
     CurrentSteering = Player.position.vx < 0 ? MaxSteering : -MaxSteering; 
+    dcAudio_SfxPlay(&wallHitSfx);
 }
 
 void DamagePlayer(void)
@@ -277,6 +295,8 @@ void DamagePlayer(void)
     {
         SetCapitanState(DAMAGE);
     }
+
+    dcAudio_SfxPlay(&hitSfx);
 }
 
 void OnPlayerObstacleHit(SDC_Shape* Other)
@@ -397,7 +417,7 @@ void riverInitScene(tdGameMode* gameMode)
     SinkingGameOver = 0;
     SkinkingCounter = 0;
     totalDistance = 0;
-    maxLonchaFromList = 7;
+    maxLonchaFromList = INITIAL_LOCNCHAS_IDX;
 
 
     bImmune = 0;
@@ -535,6 +555,7 @@ void updatePlayer(void)
     if( _PAD(0,PADRright ) & padState && Player.position.vy == 0)
     {
         VerticalAcceleration = JUMP_FORCE;
+        dcAudio_SfxPlay(&jumpSfx);
     }
 
     if( _PAD(0,PADRdown ) & padState && Player.position.vy == 0)
@@ -629,13 +650,17 @@ void riverUpdateScene(tdGameMode* gameMode)
         totalDistance += scrollSpeed >> 3;
 
         // If you change lonchas list you may want to change this
-        if(totalDistance > 15000)
+        if(totalDistance > 50000)
         {
-            maxLonchaFromList = 12;
+            maxLonchaFromList = RUBENCHOUSE_LOCNCHAS_IDX;
+        }
+        else if(totalDistance > 15000)
+        {
+            maxLonchaFromList = THIRD_LOCNCHAS_IDX;
         }
         else if (totalDistance > 8000)
         {
-            maxLonchaFromList = 9;
+            maxLonchaFromList = SECOND_LOCNCHAS_IDX;
         }
     }
 
@@ -660,7 +685,7 @@ void riverUpdateScene(tdGameMode* gameMode)
     {
         UpdateSinking();
         ClearObstacles();
-        maxLonchaFromList = 7;
+        maxLonchaFromList = INITIAL_LOCNCHAS_IDX;
     }
     else
     {

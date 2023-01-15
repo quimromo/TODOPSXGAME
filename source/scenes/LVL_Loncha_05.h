@@ -30,14 +30,12 @@ tdActor levelData_LVL_Loncha_05_actors[] = {
 .rotation={0, 0, 0}}
 };
 SDC_OOBB levelData_LVL_Loncha_05_collisions[] = {
-{.center={3270,0,0}, .halfSize={-100,4000,-10000}, .rotation={0,0,0}, .userData=1},
-{.center={-3300,0,0}, .halfSize={-100,4000,-10000}, .rotation={0,0,0}, .userData=1},
-{.center={-10,0,2020}, .halfSize={-555,706,-302}, .rotation={0,0,0}, .userData=0},
-{.center={-10,0,1190}, .halfSize={-555,706,-302}, .rotation={0,0,0}, .userData=0},
-{.center={-10,0,-370}, .halfSize={-555,706,-302}, .rotation={0,0,0}, .userData=0},
-{.center={-10,0,-1960}, .halfSize={-555,706,-302}, .rotation={0,0,0}, .userData=0},
-{.center={-10,0,390}, .halfSize={-555,706,-302}, .rotation={0,0,0}, .userData=0},
-{.center={-10,0,-1140}, .halfSize={-555,706,-302}, .rotation={0,0,0}, .userData=0}
+{.center={-10,0,2020}, .halfSize={-636,706,-302}, .rotation={0,0,0}, .userData=0},
+{.center={-10,0,1190}, .halfSize={-636,706,-302}, .rotation={0,0,0}, .userData=0},
+{.center={-10,0,-370}, .halfSize={-636,706,-302}, .rotation={0,0,0}, .userData=0},
+{.center={-10,0,-1960}, .halfSize={-636,706,-302}, .rotation={0,0,0}, .userData=0},
+{.center={-10,0,390}, .halfSize={-636,706,-302}, .rotation={0,0,0}, .userData=0},
+{.center={-10,0,-1140}, .halfSize={-636,706,-302}, .rotation={0,0,0}, .userData=0}
 };
 tdLoncha levelData_LVL_Loncha_05 = { .actors = levelData_LVL_Loncha_05_actors,  .numActors = sizeof(levelData_LVL_Loncha_05_actors) / sizeof(levelData_LVL_Loncha_05_actors[0]),
 .collisions = levelData_LVL_Loncha_05_collisions,  .numCollisions = sizeof(levelData_LVL_Loncha_05_collisions) / sizeof(levelData_LVL_Loncha_05_collisions[0])

@@ -13,6 +13,8 @@
 #include "dcMath.h"
 #include "dcCamera.h"
 #include "dcRender.h"
+#include "dcAudio.h"
+
 #include "dcMisc.h"
 #include "dcCollision.h"
 
@@ -27,9 +29,18 @@ unsigned int perftest_lastcounter; // the last sampled counter value
 unsigned int perftest_numcycles; // the number of completed test cycles
 unsigned int perftest_currtest; // which test is currently running
 
+extern unsigned long _binary_assets_audio_hit_vag_start[];
+extern unsigned long _binary_assets_audio_wallhit_vag_start[];
+extern unsigned long _binary_assets_audio_jump_vag_start[];
+
+SDC_Sfx hitSfx;
+SDC_Sfx wallHitSfx;
+SDC_Sfx jumpSfx;
+
 extern int totalPrimitives;
 
 SDC_Render render;
+SDC_Audio audio;
 SDC_DrawParams drawParams = {
     .tim = NULL,
     .constantColor = {255, 255, 255},
@@ -94,6 +105,12 @@ int main(void)
     
     CVECTOR bgColor = {60, 120, 120};
     dcRender_Init(&render, SCREEN_WIDTH, SCREEN_HEIGHT, bgColor, 4096, 16384*10, RENDER_MODE_PAL);
+    dcAudio_Init(&audio, 16);
+
+    //load sfx
+    dcAudio_SfxLoad(&audio, &hitSfx, (u_char *)_binary_assets_audio_hit_vag_start);
+    dcAudio_SfxLoad(&audio, &wallHitSfx, (u_char *)_binary_assets_audio_wallhit_vag_start);
+    dcAudio_SfxLoad(&audio, &jumpSfx, (u_char *)_binary_assets_audio_jump_vag_start);
 
     dcBF_Init(&Broadphase, 64);
     for(int i = 0; i < levelData_LVL_Lonchas.numCollisions; ++i)
