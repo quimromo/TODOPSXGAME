@@ -18,6 +18,7 @@
 
 #include "tdGameplay.h"
 #include "riverGameMode.h"
+#include "titleGameMode.h"
 #include "scenes/LVL_TestScene.h"
 #include "scenes/LVL_Lonchas.h"
 
@@ -118,14 +119,14 @@ int main(void)
     TransMatrix(&transform, &translation);
 
     u_long prevSelectState = 0;
-    currentGameMode = &riverGameMode;
+    currentGameMode = &titleGameMode;
     InitGameMode(currentGameMode);
 
-    int counterToUse = RCntCNT1;
+    //int counterToUse = RCntCNT1;
 
     while (1)
     {
-        int primitivesBeforeFrame = totalPrimitives;
+        //int primitivesBeforeFrame = totalPrimitives;
         // Cycle game-modes by pressing start
         u_long padState = PadRead(0);
         if( nextGameMode != NULL)
@@ -144,22 +145,22 @@ int main(void)
         prevSelectState = currentSelectState;
 
         // Update and draw the current game mode
-        int counterBeforeUpdate = GetRCnt(counterToUse);
+        //int counterBeforeUpdate = GetRCnt(counterToUse);
         UpdateGameMode(currentGameMode);
-        int counterAfterUpdate = GetRCnt(counterToUse);
-        int counterBeforeDraw = GetRCnt(counterToUse);
+        //int counterAfterUpdate = GetRCnt(counterToUse);
+        //int counterBeforeDraw = GetRCnt(counterToUse);
         DrawGameMode(currentGameMode, &render);
-        int counterAfterDraw = GetRCnt(counterToUse);
-        int counterBeforeSwap = GetRCnt(counterToUse);
+        //int counterAfterDraw = GetRCnt(counterToUse);
+        //int counterBeforeSwap = GetRCnt(counterToUse);
         dcRender_SwapBuffers(&render);
-        int counterAfterSwap = GetRCnt(counterToUse);
+        //int counterAfterSwap = GetRCnt(counterToUse);
 
-        int updateDuration = counterAfterUpdate - counterBeforeUpdate;
-        int drawDuration = counterAfterDraw - counterBeforeDraw;
-        int swapDuration = counterAfterSwap - counterBeforeSwap;
-        int drawnPrimitives = totalPrimitives - primitivesBeforeFrame;
+        //int updateDuration = counterAfterUpdate - counterBeforeUpdate;
+        //int drawDuration = counterAfterDraw - counterBeforeDraw;
+        //int swapDuration = counterAfterSwap - counterBeforeSwap;
+        //int drawnPrimitives = totalPrimitives - primitivesBeforeFrame;
 
-        FntPrint("Update: %d Draw: %d Swap: %d \nPrimitives: %d\n", updateDuration, drawDuration, swapDuration, drawnPrimitives);
+        //FntPrint("Update: %d Draw: %d Swap: %d \nPrimitives: %d\n", updateDuration, drawDuration, swapDuration, drawnPrimitives);
         
     }
 
