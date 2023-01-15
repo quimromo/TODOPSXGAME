@@ -317,3 +317,13 @@ SDC_Texture* GetTextureDataAndLoadIfNeeded(u_long* tim_identifier)
 
     return textureData;
 }
+
+int RandomBetween(int min, int max)
+{
+    if (min > max)
+        return RandomBetween(max, min);
+
+    int range = max - min;
+    int r = rand() % range;
+    return min + r;
+}

@@ -135,12 +135,8 @@ void IncrementScrollSpeed()
 }
 void IncrementLonchasListId()
 {
-    idInLonchasList++;
     int numLonchasInList = sizeof(lonchasList) / sizeof(lonchasList[0]);
-    if(idInLonchasList >= numLonchasInList)
-    {
-        idInLonchasList = 0;
-    }
+    idInLonchasList = RandomBetween(1, numLonchasInList);
 }
 
 tdLoncha* GetNewLoncha(void)
