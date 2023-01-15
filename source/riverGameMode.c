@@ -40,7 +40,9 @@ int riverBackgroundInitialized = 0;
 extern unsigned long _binary_assets_textures_sky_psx_tim_start[];
 
 unsigned CurrentObstacles[MAX_OBSTACLES_PER_LONCHA];
-unsigned numObstacles;   
+unsigned numObstacles;
+
+unsigned totalDistance = 0;
 
 tdGameMode riverGameMode = 
 {
@@ -386,6 +388,7 @@ void riverUpdateScene(tdGameMode* gameMode)
 
     int prevLonchaIdx = lonchaOffset.vz / offsetToChangeLoncha;
     lonchaOffset.vz += scrollSpeed;
+    totalDistance += scrollSpeed;
     dcBF_scrollAllShapes(&Broadphase,-scrollSpeed);
     int newLonchaIdx = lonchaOffset.vz / offsetToChangeLoncha;
 
