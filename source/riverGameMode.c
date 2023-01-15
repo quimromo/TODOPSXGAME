@@ -19,6 +19,7 @@
 #include "tdConfig.h"
 #include <libetc.h>
 #include <stdio.h>
+#include "dcAudio.h"
 
 #define IMMUNITY_BLINK_RATE 3
 #define HIT_IMMUNITY_DURATION 60
@@ -39,6 +40,10 @@
 
 extern SDC_Broadphase Broadphase;
 
+extern SDC_Sfx hitSfx;
+extern SDC_Sfx wallHitSfx;
+extern SDC_Sfx jumpSfx;
+
 SDC_Camera* RiverGameModeCamera;
 SDC_Render* RiverGameModeRender;
 
@@ -46,6 +51,7 @@ int bLoadedPhisicsLoncha = 0;
 
 extern tdLoncha levelData_LVL_Lonchas;
 extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
+extern SDC_Audio audio;
 
 extern tdTIMDataHandler timData[];
 SDC_Camera riverCamera;
@@ -261,6 +267,7 @@ tdLoncha* GetNewLoncha(void)
 void CorrectUserLocation()
 {
     CurrentSteering = Player.position.vx < 0 ? MaxSteering : -MaxSteering; 
+    dcAudio_SfxPlay(&wallHitSfx);
 }
 
 void DamagePlayer(void)
@@ -277,6 +284,8 @@ void DamagePlayer(void)
     {
         SetCapitanState(DAMAGE);
     }
+
+    dcAudio_SfxPlay(&hitSfx);
 }
 
 void OnPlayerObstacleHit(SDC_Shape* Other)
@@ -535,6 +544,7 @@ void updatePlayer(void)
     if( _PAD(0,PADRright ) & padState && Player.position.vy == 0)
     {
         VerticalAcceleration = JUMP_FORCE;
+        dcAudio_SfxPlay(&jumpSfx);
     }
 
     if( _PAD(0,PADRdown ) & padState && Player.position.vy == 0)
