@@ -4,6 +4,8 @@
 
 #include <stddef.h>
 #include <libgte.h>
+#include "dcRender.h"
+#include "dcCamera.h"
 
 /* RAY INTERSECTIONS */
 
@@ -82,9 +84,10 @@ typedef struct
 void dcBF_Init(SDC_Broadphase* bf, unsigned maxShapes);
 unsigned dcBF_addShape( SDC_Broadphase* bf, SDC_Shape* shape );
 void dcBF_removeShape( SDC_Broadphase* bf, unsigned shapeId );
+void dcBF_scrollAllShapes(SDC_Broadphase* bf, long offset );
 void dcBF_moveShape( SDC_Broadphase* bf, unsigned shapeId, SVECTOR* newPos );
-int dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape );
-int dcCollision_shapesCollide(SDC_Shape* shapeA, SDC_Shape* shapeB);
+SDC_Shape* dcBF_shapeCollides( SDC_Broadphase* bf, SDC_Shape* shape , SDC_Render* DebugRenderer, SDC_Camera* camera);
+int dcCollision_shapesCollide(SDC_Shape* shapeA, SDC_Shape* shapeB, SDC_Render* DebugRenderer, SDC_Camera* camera);
 
 
 #endif /* _DC_COLLISION_H */
