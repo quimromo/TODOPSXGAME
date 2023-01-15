@@ -237,9 +237,13 @@ void DrawPolyVertex(SDC_Mesh3D* mesh, SDC_Render* render, CVECTOR* color)
 void DrawPolyVertexTextured(SDC_Mesh3D* mesh, SDC_Render* render, CVECTOR* color)
 {
     u_short clut = getClut(mesh->textureData.crect.x, mesh->textureData.crect.y); /*texture CLUT*/
-    u_short tpage = getTPage(mesh->textureData.mode, 0, mesh->textureData.prect.x, mesh->textureData.prect.y); /*texture page*/
+
+    u_short tpage = getTPage(mesh->textureData.mode, 0, mesh->textureData.prect.x & ~0x3f, mesh->textureData.prect.y & ~0xff); /*texture page*/
     u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
     int orderingTableCount = render->orderingTableCount;
+
+    short u_off = mesh->textureData.prect.x & 0x3f;
+    short v_off = mesh->textureData.prect.y & 0xff;
 
     for (int i = 0; i < mesh->numIndices; i += 3) {
         u_short index0 = mesh->indices[i];
@@ -260,7 +264,7 @@ void DrawPolyVertexTextured(SDC_Mesh3D* mesh, SDC_Render* render, CVECTOR* color
 
         setPolyFT3(polyFT3);
         setRGB0(polyFT3, 128, 128, 128);
-        setUV3(polyFT3, vertexs[index0].u , vertexs[index0].v, vertexs[index1].u , vertexs[index1].v, vertexs[index2].u , vertexs[index2].v);
+        setUV3(polyFT3, vertexs[index0].u + u_off, vertexs[index0].v + v_off, vertexs[index1].u + u_off, vertexs[index1].v + v_off, vertexs[index2].u + u_off, vertexs[index2].v + v_off);
         polyFT3->tpage = tpage;
         polyFT3->clut = clut;
 

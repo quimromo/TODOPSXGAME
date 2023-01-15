@@ -3,4 +3,5 @@ tileset.tim \
 ./assets/textures/sky_psx.tim\
 ./assets/textures/waterTilesetFinal.tim \
 ./assets/textures/texturaEpica.tim \
-./assets/textures/T_Vapor_hull.tim
+./assets/textures/T_Vapor_hull.tim \
+./assets/textures/casaTexture.tim 

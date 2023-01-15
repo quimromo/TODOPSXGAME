@@ -10,6 +10,11 @@
 #include "LVL_Loncha_04.h"
 #include "LVL_Loncha_05.h"
 #include "LVL_Loncha_06.h"
+#include "LVL_Loncha_07.h"
+#include "LVL_Loncha_08.h"
+#include "LVL_Loncha_09.h"
+#include "LVL_Loncha_10.h"
+#include "LVL_Loncha_11.h"
 #include "LVL_NewLoncha_00.h"
 #include "tdConfig.h"
 #include <libetc.h>
@@ -86,8 +91,9 @@ long VerticalAcceleration = 0;
 // Movement Variables
 int scrollSpeed = 65;
 
-int maxScrollSpeed = 300;
+int maxScrollSpeed = 270;
 int scrollSpeedIncreasePerLoncha = 30;
+int screollSpeedIncreasePerLonchaAfterFirstHit = 50;
 long SteeringStep = 100;
 long FrictionStep = 70;
 
@@ -119,6 +125,10 @@ char bCinematicMode = 0;
 extern int bEpicDebugMode;
 extern unsigned long _binary_assets_textures_T_Vapor_hull_tim_start[];
 
+// Used to select from available lonchas
+int maxLonchaFromList = 7;
+
+// Order matters
 tdLoncha* lonchasList[] = {
     &levelData_LVL_Loncha_00,
     &levelData_LVL_Loncha_01,
@@ -126,7 +136,14 @@ tdLoncha* lonchasList[] = {
     &levelData_LVL_Loncha_03,
     &levelData_LVL_Loncha_04,
     &levelData_LVL_Loncha_05,
-    &levelData_LVL_Loncha_06,
+    &levelData_LVL_Loncha_06, // 7
+
+    &levelData_LVL_Loncha_08,
+    &levelData_LVL_Loncha_10, // 9
+
+    &levelData_LVL_Loncha_07,
+    &levelData_LVL_Loncha_09,
+    &levelData_LVL_Loncha_11  // 12
 };
 
 int idInLonchasList = 0;
@@ -202,7 +219,7 @@ void IncrementScrollSpeed()
 void IncrementLonchasListId()
 {
     int numLonchasInList = sizeof(lonchasList) / sizeof(lonchasList[0]);
-    idInLonchasList = RandomBetween(1, numLonchasInList);
+    idInLonchasList = RandomBetween(1, numLonchasInList < maxLonchaFromList ? numLonchasInList : maxLonchaFromList);
 }
 
 tdLoncha* GetNewLoncha(void)
@@ -222,6 +239,9 @@ void OnPlayerObstacleHit()
     ImmunityDuration = HIT_IMMUNITY_DURATION;
     bImmune = 1;
     scrollSpeed = MIN_SCROLL_SPEED;
+
+    // Increase scroll speed per loncha after first hit to get back to action faster
+    scrollSpeedIncreasePerLoncha = screollSpeedIncreasePerLonchaAfterFirstHit;
 }
 
 void riverInitScene(tdGameMode* gameMode)
@@ -424,6 +444,16 @@ void riverUpdateScene(tdGameMode* gameMode)
     if (!bCinematicMode)
     {
         totalDistance += scrollSpeed >> 3;
+
+        // If you change lonchas list you may want to change this
+        if(totalDistance > 15000)
+        {
+            maxLonchaFromList = 12;
+        }
+        else if (totalDistance > 8000)
+        {
+            maxLonchaFromList = 9;
+        }
     }
 
     if (prevLonchaIdx != newLonchaIdx)

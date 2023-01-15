@@ -10,6 +10,8 @@
         "td_vapor_hull.h": "c",
         "lvl_loncha_03.h": "c",
         "lvl_newloncha_00.h": "c",
-        "lvl_loncha_05.h": "c"
+        "lvl_loncha_05.h": "c",
+        "lvl_loncha_06.h": "c",
+        "lvl_loncha_08.h": "c"
     }
 }
