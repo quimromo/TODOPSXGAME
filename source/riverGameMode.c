@@ -561,16 +561,19 @@ void updatePlayer(void)
     if( _PAD(0,PADRdown ) & padState && Player.position.vy == 0)
     {
         VerticalAcceleration = JUMP_FORCE;
+        dcAudio_SfxPlay(&jumpSfx);
     }
 
     if( _PAD(0,PADRup ) & padState && Player.position.vy == 0)
     {
         VerticalAcceleration = JUMP_FORCE;
+        dcAudio_SfxPlay(&jumpSfx);
     }
 
     if( _PAD(0,PADRleft ) & padState && Player.position.vy == 0)
     {
         VerticalAcceleration = JUMP_FORCE;
+        dcAudio_SfxPlay(&jumpSfx);
     }
 
     if (Player.position.vy > 0)
