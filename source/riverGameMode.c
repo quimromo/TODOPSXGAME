@@ -139,11 +139,11 @@ void InitializeLonchas()
         for(int j = 0; j<loncha->numActors; ++j)
         {
             // Initialize texture data
-            SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded( loncha->actors[i].meshData.texture_tim);
+            SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded( loncha->actors[j].meshData.texture_tim);
             loncha->actors[j].meshData.mesh->textureData = *textureData;
             
             // Initialize bounding box
-            InitializeActorBoundingBoxBasedOnMesh(&loncha->actors[i]);
+            InitializeActorBoundingBoxBasedOnMesh(&loncha->actors[j]);
         }
     }
 }
