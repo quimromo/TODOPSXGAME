@@ -140,7 +140,7 @@ void InitializeLonchas()
         {
             // Initialize texture data
             SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded( loncha->actors[i].meshData.texture_tim);
-            loncha->actors[i].meshData.mesh->textureData = *textureData;
+            loncha->actors[j].meshData.mesh->textureData = *textureData;
             
             // Initialize bounding box
             InitializeActorBoundingBoxBasedOnMesh(&loncha->actors[i]);
