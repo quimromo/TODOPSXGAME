@@ -68,6 +68,9 @@ extern unsigned long _binary_assets_textures_gameover_capitan_tim_start[];
 extern unsigned long _binary_assets_textures_damage_tim_start[];
 extern unsigned long _binary_assets_textures_speed_tim_start[];
 
+extern unsigned long _binary_assets_textures_gameover_tim_start[];
+SDC_Texture gameoverMessage;
+
 tdRiverUI riverUI;
 
 tdGameMode riverGameMode = 
@@ -370,6 +373,12 @@ void riverInitScene(tdGameMode* gameMode)
         riverUI.capitainState = IDLE;
         riverUI.timeInState = 0;
 
+        dcRender_LoadTexture(&timImage, _binary_assets_textures_gameover_tim_start);
+        
+        gameoverMessage.mode = timImage.mode;
+        gameoverMessage.crect = *timImage.crect;
+        gameoverMessage.prect = *timImage.prect;
+
         riverBackgroundInitialized = 1;
     }
     
@@ -450,6 +459,13 @@ void UpdateSinking(void)
     Player.position.vy -= 5;
     Player.rotation.vx -= 10;
     ++SkinkingCounter;
+
+    if(SkinkingCounter > 20 )
+    {
+        long size = DC_LERP(200, 10, ( (( 100 - DC_MIN(SkinkingCounter, 100)) << 12) /100  ) );
+        RECT screenLoc = {(640 - (size << 1)) >> 1, (240 - size) >> 1, size << 1, size};
+        dcRender_DrawQuad(RiverGameModeRender, &gameoverMessage, &screenLoc);
+    }
 
     if (SkinkingCounter >= 150)
     {

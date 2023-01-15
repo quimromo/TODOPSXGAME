@@ -645,7 +645,6 @@ void dcRender_DrawQuad(SDC_Render* render, SDC_Texture* texture, RECT* screenLoc
     polyGT4->tpage = getTPage(texture->mode, 0, tpageX, tpageY);
     setClut(polyGT4, texture->crect.x, texture->crect.y);
     setUVWH(polyGT4, texture->prect.x & 0x003f, texture->prect.y & 0x00ff, texture->prect.w, texture->prect.h);
-    setShadeTex(polyGT4, 0);
 
     addPrim(&orderingTable[otz], polyGT4);
     _dcRender_IncPrimitive(render, sizeof(POLY_FT4));
