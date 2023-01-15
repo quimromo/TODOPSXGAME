@@ -1,17 +1,14 @@
 #pragma once
 #include "tdGameplay.h"
-#include "lonchaBase.h"
-
 #include "casa.h"
 
-extern unsigned long _binary_assets_textures_waterTilesetFinal_tim_start[];
+#include "lonchaBase.h"
 
 extern unsigned long _binary_assets_textures_casaTexture_tim_start[];
 
+extern unsigned long _binary_assets_textures_waterTilesetFinal_tim_start[];
+
 tdActor levelData_LVL_Loncha_09_actors[] = {
-{.position = {0,0,0}, .meshData={.mesh=&lonchaBase_Mesh, .texture_tim=_binary_assets_textures_waterTilesetFinal_tim_start},
-.scale = {4000,4000,4000},
-.rotation={0, 0, 0}},
 {.position = {60,0,-2260}, .meshData={.mesh=&casa_Mesh, .texture_tim=_binary_assets_textures_casaTexture_tim_start},
 .scale = {4000,4000,4000},
 .rotation={0, 0, 0}},
@@ -20,11 +17,12 @@ tdActor levelData_LVL_Loncha_09_actors[] = {
 .rotation={0, 0, 0}},
 {.position = {2090,0,1200}, .meshData={.mesh=&casa_Mesh, .texture_tim=_binary_assets_textures_casaTexture_tim_start},
 .scale = {4000,4000,4000},
+.rotation={0, 0, 0}},
+{.position = {0,0,0}, .meshData={.mesh=&lonchaBase_Mesh, .texture_tim=_binary_assets_textures_waterTilesetFinal_tim_start},
+.scale = {4000,4000,4000},
 .rotation={0, 0, 0}}
 };
 SDC_OOBB levelData_LVL_Loncha_09_collisions[] = {
-{.center={3270,0,0}, .halfSize={-100,4000,-10000}, .rotation={0,0,0}, .userData=1},
-{.center={-3300,0,0}, .halfSize={-100,4000,-10000}, .rotation={0,0,0}, .userData=1},
 {.center={-1660,430,1100}, .halfSize={-807,706,-605}, .rotation={0,0,0}, .userData=2},
 {.center={2090,430,940}, .halfSize={-807,706,-605}, .rotation={0,0,0}, .userData=2},
 {.center={60,430,-2520}, .halfSize={-807,706,-605}, .rotation={0,0,0}, .userData=2}
