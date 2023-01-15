@@ -8,14 +8,14 @@
 
 int totalPrimitives = 0;
 
-void _dcRender_IncPrimitive(SDC_Render* render, size_t offset)
+static inline void _dcRender_IncPrimitive(SDC_Render* render, size_t offset)
 {
-    u_char* base_ptr = render->primitives[render->doubleBufferIndex];
-    size_t nbytes = sizeof(u_char) * render->bytesPrimitives;
-    size_t curr_offset = render->nextPrimitive - base_ptr; 
-    if( curr_offset + offset >= nbytes) {
-        printf("Error!! Limit Primitives bytes '%d/%d'\n", curr_offset + offset, nbytes);
-    }
+    //u_char* base_ptr = render->primitives[render->doubleBufferIndex];
+    // size_t nbytes = sizeof(u_char) * render->bytesPrimitives;
+    // size_t curr_offset = render->nextPrimitive - base_ptr; 
+    // if( curr_offset + offset >= nbytes) {
+    //     printf("Error!! Limit Primitives bytes '%d/%d'\n", curr_offset + offset, nbytes);
+    // }
     render->nextPrimitive += offset;
     ++totalPrimitives;
 }
@@ -238,22 +238,15 @@ void DrawPolyVertexTextured(SDC_Mesh3D* mesh, SDC_Render* render, CVECTOR* color
 {
     u_short clut = getClut(mesh->textureData.crect.x, mesh->textureData.crect.y); /*texture CLUT*/
     u_short tpage = getTPage(mesh->textureData.mode, 0, mesh->textureData.prect.x, mesh->textureData.prect.y); /*texture page*/
-
-    CVECTOR curr_color = {255, 255, 255};
-    if(color) 
-            curr_color = *color;
+    u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
+    int orderingTableCount = render->orderingTableCount;
 
     for (int i = 0; i < mesh->numIndices; i += 3) {
         u_short index0 = mesh->indices[i];
         u_short index1 = mesh->indices[i+1];
         u_short index2 = mesh->indices[i+2];
-        // assert(index0 < mesh->numVertices);
-        // assert(index1 < mesh->numVertices);
-        // assert(index2 < mesh->numVertices);
-        void *poly = render->nextPrimitive;  
+        void *poly = render->nextPrimitive;
 
-        u_long *orderingTable = render->orderingTable[render->doubleBufferIndex];
-        int orderingTableCount = render->orderingTableCount;
         long p, otz, flg;
         int nclip;
 
@@ -266,7 +259,7 @@ void DrawPolyVertexTextured(SDC_Mesh3D* mesh, SDC_Render* render, CVECTOR* color
         if ((otz <= 0) || (otz >= orderingTableCount)) continue;
 
         setPolyFT3(polyFT3);
-        setRGB0(polyFT3, curr_color.r, curr_color.g, curr_color.b);
+        setRGB0(polyFT3, 128, 128, 128);
         setUV3(polyFT3, vertexs[index0].u , vertexs[index0].v, vertexs[index1].u , vertexs[index1].v, vertexs[index2].u , vertexs[index2].v);
         polyFT3->tpage = tpage;
         polyFT3->clut = clut;

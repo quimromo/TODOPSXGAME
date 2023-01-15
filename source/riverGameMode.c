@@ -15,6 +15,14 @@
 #define HIT_IMMUNITY_DURATION 60
 #define WALL HIT_IMMUNITY_DURATION 30
 
+#define MAX_OBSTACLES_PER_LONCHA 50
+
+extern SDC_Broadphase Broadphase;
+
+SDC_Camera* RiverGameModeCamera;
+SDC_Render* RiverGameModeRender;
+
+
 extern tdLoncha levelData_LVL_Lonchas;
 extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
 
@@ -24,6 +32,9 @@ SDC_Camera riverCamera;
 SDC_Texture riverBackground;
 int riverBackgroundInitialized = 0;
 extern unsigned long _binary_assets_textures_sky_psx_tim_start[];
+
+unsigned CurrentObstacles[MAX_OBSTACLES_PER_LONCHA];
+unsigned numObstacles;   
 
 tdGameMode riverGameMode = 
 {
@@ -41,6 +52,8 @@ enum ESteeringDirection
 };
 tdLoncha* currentLoncha;
 tdLoncha* nextLoncha;
+
+tdLoncha* currentPhisicsLoncha;
 unsigned long CurrentFrame = 0;
 
 VECTOR lonchaOffset = {0};
@@ -55,9 +68,9 @@ int CurrImmunityFrames = 0;
 int ImmunityDuration = 0;
 
 // Movement Variables
-int scrollSpeed = 65;
+int scrollSpeed = 90;
 int maxScrollSpeed = 300;
-int scrollSpeedIncreasePerLoncha = 60;
+int scrollSpeedIncreasePerLoncha = 65;
 long SteeringStep = 100;
 long FrictionStep = 70;
 
@@ -67,7 +80,7 @@ long MinSteering = 40;
 int PrevSteering = STEERING_NONE;
 
 int currentCinematicTime = 0;
-int totalCinematicDuration = 2048;
+int totalCinematicDuration = 3000;
 SVECTOR introCinematicPath[] = {
     {0, 310, 1160},
     {-740, 370, 340+1000},
@@ -87,7 +100,7 @@ SVECTOR introCinematicLookAt[] = {
 char bCinematicMode = 0;
 
 extern int bEpicDebugMode;
-extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
+extern unsigned long _binary_assets_textures_T_Vapor_hull_tim_start[];
 
 tdLoncha* lonchasList[] = {
     &levelData_LVL_Loncha_00,
@@ -122,6 +135,39 @@ void InitializeLonchas()
             // Initialize bounding box
             InitializeActorBoundingBoxBasedOnMesh(&loncha->actors[i]);
         }
+    }
+}
+
+void ClearObstacles()
+{
+    for(int i = 0; i < numObstacles; ++i)
+    {
+        dcBF_removeShape(&Broadphase,CurrentObstacles[i]);
+    }
+    numObstacles = 0;
+}
+
+void registerLonchaObstacles(tdLoncha* Loncha)
+{
+    numObstacles = 0;
+    for(int i = 0; i < Loncha->numCollisions; ++i)
+    {
+        if (i > MAX_OBSTACLES_PER_LONCHA)
+        {
+            printf("Too many obstacles in a loncha :(");
+            return;
+        }
+        SDC_Shape shape;
+        shape.shapeType = ST_OOBB;
+        shape.oobb.center = Loncha->collisions[i].center;
+        shape.oobb.center.vz -= offsetToChangeLoncha >> 1;
+        shape.oobb.halfSize.vx = abs(Loncha->collisions[i].halfSize.vx);
+        shape.oobb.halfSize.vy = abs(Loncha->collisions[i].halfSize.vy);
+        shape.oobb.halfSize.vz = abs(Loncha->collisions[i].halfSize.vz);
+        shape.oobb.rotation = Loncha->collisions[i].rotation;
+
+        CurrentObstacles[numObstacles] = dcBF_addShape(&Broadphase, &shape);
+        numObstacles++;   
     }
 }
 
@@ -177,7 +223,7 @@ void riverInitScene(tdGameMode* gameMode)
     nextLoncha = GetNewLoncha();
 
     Player.meshData.mesh = &td_VAPOR_hull_Mesh;
-    Player.meshData.texture_tim = _binary_assets_textures_texturaEpica_tim_start;
+    Player.meshData.texture_tim = _binary_assets_textures_T_Vapor_hull_tim_start;
     SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded(Player.meshData.texture_tim);
     Player.meshData.mesh->textureData = *textureData;
     Player.scale.vx = 4000;
@@ -214,6 +260,19 @@ void updatePlayerImmunity()
     {
         bImmune = 0;
         bPlayerVisible = 1;
+    }
+}
+
+void updateCollisions()
+{
+    SDC_Shape sphereShape;
+    sphereShape.shapeType = ST_SPHERE;
+    sphereShape.sphere.center = Player.position; 
+    sphereShape.sphere.radius = 110;
+
+    if( dcBF_shapeCollides(&Broadphase, &sphereShape ,RiverGameModeRender, RiverGameModeCamera ) )
+    {
+        OnPlayerObstacleHit();
     }
 }
 
@@ -275,6 +334,7 @@ void updatePlayer()
     Player.position.vx += CurrentSteering;
 
     updatePlayerImmunity();
+    updateCollisions();
 }
 
 void updateCamera()
@@ -312,6 +372,7 @@ void riverUpdateScene(tdGameMode* gameMode)
 
     int prevLonchaIdx = lonchaOffset.vz / offsetToChangeLoncha;
     lonchaOffset.vz += scrollSpeed;
+    dcBF_scrollAllShapes(&Broadphase,-scrollSpeed);
     int newLonchaIdx = lonchaOffset.vz / offsetToChangeLoncha;
 
     if (prevLonchaIdx != newLonchaIdx)
@@ -322,6 +383,13 @@ void riverUpdateScene(tdGameMode* gameMode)
         IncrementScrollSpeed();
     }
 
+    if (lonchaOffset.vz > offsetToChangeLoncha >> 1 && currentPhisicsLoncha != nextLoncha && nextLoncha)
+    {
+        currentPhisicsLoncha = nextLoncha;
+        ClearObstacles();
+        registerLonchaObstacles(currentPhisicsLoncha);
+    }
+
     updatePlayer();
     updateCamera();
      // Update cineamtic if needed
@@ -330,6 +398,8 @@ void riverUpdateScene(tdGameMode* gameMode)
 
 void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
 {
+    RiverGameModeCamera = gameMode->camera;
+    RiverGameModeRender = render;
     long cameraPosUnrealX = 0;
     long cameraPosUnrealY = -2000;
     long cameraPosUnrealZ = 1000;
@@ -388,7 +458,10 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     }
 
     if (bPlayerVisible)
-        DrawActor(&Player,render,gameMode->camera);
+    {
+        VECTOR playerOffset = {0,80,0};
+        DrawActorOffset(&Player, playerOffset, render,gameMode->camera);
+    }
 }
 
 void DrawBackground(tdGameMode* gameMode, SDC_Render* render)

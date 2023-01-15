@@ -111,7 +111,7 @@ void DrawHouses(SDC_Render* render, SDC_Camera* camera)
         sphereShape.sphere.center = cameraLookAt; 
         sphereShape.sphere.radius = 512;
 
-        if( dcBF_shapeCollides(&Broadphase, &sphereShape ) )
+        if( dcBF_shapeCollides(&Broadphase, &sphereShape,NULL,NULL ) )
         {
             drawParams.bUseConstantColor = 1;
         }
@@ -177,16 +177,16 @@ int main(void)
     dcBF_Init(&Broadphase, 64);
     for(int i = 0; i < levelData_LVL_Lonchas.numCollisions; ++i)
     {
-        SDC_Shape shape;
-        shape.shapeType = ST_OOBB;
-        shape.oobb.center = levelData_LVL_Lonchas.collisions[i].center;
-        shape.oobb.halfSize.vx = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vx);
-        shape.oobb.halfSize.vy = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vy);
-        shape.oobb.halfSize.vz = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vz);
-        shape.oobb.rotation = levelData_LVL_Lonchas.collisions[i].rotation;
+        // SDC_Shape shape;
+        // shape.shapeType = ST_OOBB;
+        // shape.oobb.center = levelData_LVL_Lonchas.collisions[i].center;
+        // shape.oobb.halfSize.vx = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vx);
+        // shape.oobb.halfSize.vy = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vy);
+        // shape.oobb.halfSize.vz = abs(levelData_LVL_Lonchas.collisions[i].halfSize.vz);
+        // shape.oobb.rotation = levelData_LVL_Lonchas.collisions[i].rotation;
 
 
-        dcBF_addShape(&Broadphase, &shape);
+       // dcBF_addShape(&Broadphase, &shape);
 
     }
 
