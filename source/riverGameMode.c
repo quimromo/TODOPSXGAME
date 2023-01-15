@@ -630,25 +630,26 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     FntPrint("Total distance: %d\n", totalDistance);
 }
 
-void riverDrawLivesUI(tdGameMode* gameMode, SDC_Render* render)
+void riverDrawLifesUI(tdGameMode* gameMode, SDC_Render* render)
 {
     RECT lifePosition = {0};
-    lifePosition.w = lifePosition.h = 16;
+    lifePosition.h = 16;
+    lifePosition.w = lifePosition.h << 1;
 
     for (int i = 0; i < MaxLives; ++i)
     {
-        lifePosition.x = 5 + 20 * i;
+        lifePosition.x = 5 + 40 * i;
         lifePosition.y = 171 - 20;
 
         SDC_Texture* renderTex = NumLives > i ? &fillLifeTexture : &emptyLifeTexture;
-        dcRender_DrawQuad(render, renderTex, lifePosition;)
+        dcRender_DrawQuad(render, renderTex, &lifePosition);
     }
 }
 
 void riverDrawUI(tdGameMode* gameMode, SDC_Render* render)
 {
     dcRender_DrawQuad(render, &riverUI.captainDefaultAnim.timImage, &riverUI.captainDrawLocation);
-
+    riverDrawLifesUI(gameMode, render);
 }
 
 void DrawBackground(tdGameMode* gameMode, SDC_Render* render)
