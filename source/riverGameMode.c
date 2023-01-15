@@ -7,6 +7,10 @@
 #include "LVL_Loncha_01.h"
 #include "LVL_Loncha_02.h"
 #include "LVL_Loncha_03.h"
+#include "LVL_Loncha_04.h"
+#include "LVL_Loncha_05.h"
+#include "LVL_Loncha_06.h"
+#include "LVL_NewLoncha_00.h"
 #include "tdConfig.h"
 #include <libetc.h>
 #include <stdio.h>
@@ -116,7 +120,10 @@ tdLoncha* lonchasList[] = {
     &levelData_LVL_Loncha_00,
     &levelData_LVL_Loncha_01,
     &levelData_LVL_Loncha_02,
-    &levelData_LVL_Loncha_03
+    &levelData_LVL_Loncha_03,
+    &levelData_LVL_Loncha_04,
+    &levelData_LVL_Loncha_05,
+    &levelData_LVL_Loncha_06,
 };
 
 int idInLonchasList = 0;
@@ -139,11 +146,11 @@ void InitializeLonchas()
         for(int j = 0; j<loncha->numActors; ++j)
         {
             // Initialize texture data
-            SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded( loncha->actors[i].meshData.texture_tim);
+            SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded( loncha->actors[j].meshData.texture_tim);
             loncha->actors[j].meshData.mesh->textureData = *textureData;
             
             // Initialize bounding box
-            InitializeActorBoundingBoxBasedOnMesh(&loncha->actors[i]);
+            InitializeActorBoundingBoxBasedOnMesh(&loncha->actors[j]);
         }
     }
 }
