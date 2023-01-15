@@ -388,9 +388,13 @@ void riverUpdateScene(tdGameMode* gameMode)
 
     int prevLonchaIdx = lonchaOffset.vz / offsetToChangeLoncha;
     lonchaOffset.vz += scrollSpeed;
-    totalDistance += scrollSpeed;
     dcBF_scrollAllShapes(&Broadphase,-scrollSpeed);
     int newLonchaIdx = lonchaOffset.vz / offsetToChangeLoncha;
+
+    if (!bCinematicMode)
+    {
+        totalDistance += scrollSpeed >> 3;
+    }
 
     if (prevLonchaIdx != newLonchaIdx)
     {
@@ -481,6 +485,8 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
         VECTOR playerOffset = {0,80,0};
         DrawActorOffset(&Player, playerOffset, render,gameMode->camera);
     }
+
+    FntPrint("Total distance: %d\n", totalDistance);
 }
 
 void DrawBackground(tdGameMode* gameMode, SDC_Render* render)

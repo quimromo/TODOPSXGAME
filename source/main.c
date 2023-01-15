@@ -255,7 +255,7 @@ int main(void)
         int swapDuration = counterAfterSwap - counterBeforeSwap;
         int drawnPrimitives = totalPrimitives - primitivesBeforeFrame;
 
-        FntPrint("Update: %d Draw: %d Swap: %d              Primitives: %d", updateDuration, drawDuration, swapDuration, drawnPrimitives);
+        FntPrint("Update: %d Draw: %d Swap: %d \nPrimitives: %d\n", updateDuration, drawDuration, swapDuration, drawnPrimitives);
         
     }
 
