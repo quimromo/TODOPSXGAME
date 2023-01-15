@@ -64,7 +64,7 @@ unsigned numObstacles;
 unsigned totalDistance = 0;
 
 extern unsigned long _binary_assets_textures_capitan_tim_start[];
-extern unsigned long _binary_assets_textures_gameover_tim_start[];
+extern unsigned long _binary_assets_textures_gameover_capitan_tim_start[];
 extern unsigned long _binary_assets_textures_damage_tim_start[];
 extern unsigned long _binary_assets_textures_speed_tim_start[];
 
@@ -265,8 +265,17 @@ void DamagePlayer(void)
 
     if (NumLives <= 0)
     {
+<<<<<<< HEAD
         scrollSpeed = 0;
         SinkingGameOver = 1;
+=======
+        SetCapitanState(GAMEOVER);
+        // TODO: game over
+>>>>>>> 0e2e7f24d13beeb6260e3abf147d61242eb5fc98
+    }
+    else
+    {
+        SetCapitanState(DAMAGE);
     }
 }
 
@@ -276,6 +285,7 @@ void OnPlayerObstacleHit(SDC_Shape* Other)
     {
         //At the moment harcoded in PlayerUpdate
         //CorrectUserLocation();
+        SetCapitanState(DAMAGE);
     }
     else
     {
@@ -285,13 +295,13 @@ void OnPlayerObstacleHit(SDC_Shape* Other)
         ImmunityDuration = HIT_IMMUNITY_DURATION;
         bImmune = 1;
         scrollSpeed = MIN_SCROLL_SPEED;
+
         DamagePlayer();
 
         // Increase scroll speed per loncha after first hit to get back to action faster
         scrollSpeedIncreasePerLoncha = scrollSpeedIncreasePerLonchaAfterFirstHit;
     }
 
-    SetCapitanState(DAMAGE);
 }
 
 void riverInitScene(tdGameMode* gameMode)
@@ -334,7 +344,7 @@ void riverInitScene(tdGameMode* gameMode)
         riverUI.captainDamageAnim.nframes = 1;
         riverUI.captainDamageAnim.frames = &defaultCptAnimFrames[0];
 
-        dcRender_LoadTexture(&timImage, _binary_assets_textures_gameover_tim_start);
+        dcRender_LoadTexture(&timImage, _binary_assets_textures_gameover_capitan_tim_start);
         
         riverUI.captainGameOverAnim.timImage.mode = timImage.mode;
         riverUI.captainGameOverAnim.timImage.crect = *timImage.crect;
@@ -740,9 +750,13 @@ void SetCapitanState(ECapitanState newState)
 void riverUpdateUI()
 {
     riverUI.timeInState++;
-    if( riverUI.capitainState != IDLE && riverUI.timeInState > 100 )
+    if( riverUI.capitainState == SPEED && riverUI.timeInState > 50 )
     {
-        SetCapitanState(riverUI.capitainState);
+        SetCapitanState(IDLE);
+    }
+    else if(riverUI.capitainState != IDLE && riverUI.timeInState > 75 )
+    {
+        SetCapitanState(IDLE);
     }
 }
 
