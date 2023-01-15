@@ -64,7 +64,7 @@ unsigned numObstacles;
 unsigned totalDistance = 0;
 
 extern unsigned long _binary_assets_textures_capitan_tim_start[];
-extern unsigned long _binary_assets_textures_gameover_tim_start[];
+extern unsigned long _binary_assets_textures_gameover_capitan_tim_start[];
 extern unsigned long _binary_assets_textures_damage_tim_start[];
 extern unsigned long _binary_assets_textures_speed_tim_start[];
 
@@ -336,7 +336,7 @@ void riverInitScene(tdGameMode* gameMode)
         riverUI.captainDamageAnim.nframes = 1;
         riverUI.captainDamageAnim.frames = &defaultCptAnimFrames[0];
 
-        dcRender_LoadTexture(&timImage, _binary_assets_textures_gameover_tim_start);
+        dcRender_LoadTexture(&timImage, _binary_assets_textures_gameover_capitan_tim_start);
         
         riverUI.captainGameOverAnim.timImage.mode = timImage.mode;
         riverUI.captainGameOverAnim.timImage.crect = *timImage.crect;
@@ -716,9 +716,13 @@ void SetCapitanState(ECapitanState newState)
 void riverUpdateUI()
 {
     riverUI.timeInState++;
-    if( riverUI.capitainState != IDLE && riverUI.timeInState > 100 )
+    if( riverUI.capitainState == SPEED && riverUI.timeInState > 50 )
     {
-        SetCapitanState(riverUI.capitainState);
+        SetCapitanState(IDLE);
+    }
+    else if(riverUI.capitainState != IDLE && riverUI.timeInState > 75 )
+    {
+        SetCapitanState(IDLE);
     }
 }
 

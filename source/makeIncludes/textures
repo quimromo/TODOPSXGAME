@@ -10,4 +10,6 @@ tileset.tim \
 ./assets/textures/damage.tim\
 ./assets/textures/gameover.tim\
 ./assets/textures/speed.tim\
-./assets/textures/casaTexture.tim 
+./assets/textures/casaTexture.tim\
+./assets/textures/gameover_capitan.tim
+
