@@ -35,6 +35,7 @@
 #define GRAVITY_FORCE 50
 
 #define USER_DATA_WALL 1
+#define USER_DATA_TALLCOLLISION 2
 
 extern SDC_Broadphase Broadphase;
 
@@ -114,14 +115,14 @@ int NumLives = 0;
 // Movement Variables
 int scrollSpeed = MIN_SCROLL_SPEED;
 
-int maxScrollSpeed = 270;
+int maxScrollSpeed = 200;
 int scrollSpeedIncreasePerLoncha = 30;
 int scrollSpeedIncreasePerLonchaAfterFirstHit = 50;
 long SteeringStep = 100;
 long FrictionStep = 70;
 
 short MaxRotationAngle = 30;
-long MaxSteering = 300;
+long MaxSteering = 240;
 long MinSteering = 40;
 int PrevSteering = STEERING_NONE;
 
@@ -288,7 +289,9 @@ void OnPlayerObstacleHit(SDC_Shape* Other)
     }
     else
     {
-        if (bImmune || VerticalAcceleration!=0)
+        int isTallCollision = Other->userData == USER_DATA_TALLCOLLISION;
+        // Only apply damage if we are not immune or we are jumping but not colliding with tall collisions
+        if (bImmune || (VerticalAcceleration!=0 && !isTallCollision))
             return;
         CurrImmunityFrames = 0;
         ImmunityDuration = HIT_IMMUNITY_DURATION;
@@ -393,6 +396,9 @@ void riverInitScene(tdGameMode* gameMode)
     scrollSpeed = MIN_SCROLL_SPEED;
     SinkingGameOver = 0;
     SkinkingCounter = 0;
+    totalDistance = 0;
+    maxLonchaFromList = 7;
+
 
     bImmune = 0;
     bPlayerVisible = 1;
@@ -638,6 +644,8 @@ void riverUpdateScene(tdGameMode* gameMode)
     if (SinkingGameOver)
     {
         UpdateSinking();
+        ClearObstacles();
+        maxLonchaFromList = 7;
     }
     else
     {

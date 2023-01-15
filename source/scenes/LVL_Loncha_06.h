@@ -36,16 +36,16 @@ tdActor levelData_LVL_Loncha_06_actors[] = {
 .rotation={0, 0, 0}}
 };
 SDC_OOBB levelData_LVL_Loncha_06_collisions[] = {
-{.center={3270,0,0}, .halfSize={100,10000,4000}, .rotation={0,0,0}, .userData=1},
-{.center={-3300,0,0}, .halfSize={100,10000,4000}, .rotation={0,0,0}, .userData=1},
-{.center={-1700,0,3000}, .halfSize={706,302,706}, .rotation={0,0,0}, .userData=0},
-{.center={-1700,0,1490}, .halfSize={706,302,706}, .rotation={0,0,0}, .userData=0},
-{.center={-1700,0,110}, .halfSize={706,302,706}, .rotation={0,0,0}, .userData=0},
-{.center={-1700,0,-1260}, .halfSize={706,302,706}, .rotation={0,0,0}, .userData=0},
-{.center={-10,0,2140}, .halfSize={706,302,706}, .rotation={0,0,0}, .userData=0},
-{.center={-10,0,630}, .halfSize={706,302,706}, .rotation={0,0,0}, .userData=0},
-{.center={-10,0,-750}, .halfSize={706,302,706}, .rotation={0,0,0}, .userData=0},
-{.center={-10,0,-2120}, .halfSize={706,302,706}, .rotation={0,0,0}, .userData=0}
+{.center={3270,0,0}, .halfSize={-100,4000,-10000}, .rotation={0,0,0}, .userData=1},
+{.center={-3300,0,0}, .halfSize={-100,4000,-10000}, .rotation={0,0,0}, .userData=1},
+{.center={-1700,0,3000}, .halfSize={-555,706,-302}, .rotation={0,0,0}, .userData=0},
+{.center={-1700,0,1490}, .halfSize={-555,706,-302}, .rotation={0,0,0}, .userData=0},
+{.center={-1700,0,110}, .halfSize={-555,706,-302}, .rotation={0,0,0}, .userData=0},
+{.center={-1700,0,-1260}, .halfSize={-555,706,-302}, .rotation={0,0,0}, .userData=0},
+{.center={-10,0,2140}, .halfSize={-555,706,-302}, .rotation={0,0,0}, .userData=0},
+{.center={-10,0,630}, .halfSize={-555,706,-302}, .rotation={0,0,0}, .userData=0},
+{.center={-10,0,-750}, .halfSize={-555,706,-302}, .rotation={0,0,0}, .userData=0},
+{.center={-10,0,-2120}, .halfSize={-555,706,-302}, .rotation={0,0,0}, .userData=0}
 };
 tdLoncha levelData_LVL_Loncha_06 = { .actors = levelData_LVL_Loncha_06_actors,  .numActors = sizeof(levelData_LVL_Loncha_06_actors) / sizeof(levelData_LVL_Loncha_06_actors[0]),
 .collisions = levelData_LVL_Loncha_06_collisions,  .numCollisions = sizeof(levelData_LVL_Loncha_06_collisions) / sizeof(levelData_LVL_Loncha_06_collisions[0])
