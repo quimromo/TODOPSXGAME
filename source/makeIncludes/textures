@@ -7,4 +7,8 @@ tileset.tim \
 ./assets/textures/capitan.tim\
 ./assets/textures/casaTexture.tim \
 ./assets/textures/fill_life.tim \
-./assets/textures/empty_life.tim 
+./assets/textures/empty_life.tim \
+./assets/textures/damage.tim\
+./assets/textures/gameover.tim\
+./assets/textures/speed.tim\
+./assets/textures/casaTexture.tim 

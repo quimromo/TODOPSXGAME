@@ -64,6 +64,10 @@ unsigned numObstacles;
 unsigned totalDistance = 0;
 
 extern unsigned long _binary_assets_textures_capitan_tim_start[];
+extern unsigned long _binary_assets_textures_gameover_tim_start[];
+extern unsigned long _binary_assets_textures_damage_tim_start[];
+extern unsigned long _binary_assets_textures_speed_tim_start[];
+
 tdRiverUI riverUI;
 
 tdGameMode riverGameMode = 
@@ -229,6 +233,9 @@ void IncrementScrollSpeed()
     {
         scrollSpeed = maxScrollSpeed;
     }
+    
+    SetCapitanState(SPEED);
+
 }
 void IncrementLonchasListId()
 {
@@ -279,6 +286,8 @@ void OnPlayerObstacleHit(SDC_Shape* Other)
         // Increase scroll speed per loncha after first hit to get back to action faster
         scrollSpeedIncreasePerLoncha = scrollSpeedIncreasePerLonchaAfterFirstHit;
     }
+
+    SetCapitanState(DAMAGE);
 }
 
 void riverInitScene(tdGameMode* gameMode)
@@ -301,18 +310,44 @@ void riverInitScene(tdGameMode* gameMode)
         fillLifeTexture.crect = *timImage.crect;
         fillLifeTexture.prect = *timImage.prect;
 
+        static SDC_SpriteFrame defaultCptAnimFrames[] = { {0, 0, 128, 128} };
+
         dcRender_LoadTexture(&timImage, _binary_assets_textures_capitan_tim_start);
         
         riverUI.captainDefaultAnim.timImage.mode = timImage.mode;
         riverUI.captainDefaultAnim.timImage.crect = *timImage.crect;
         riverUI.captainDefaultAnim.timImage.prect = *timImage.prect;
-        
-        //riverUI.captainDefaultAnim.frames 
         riverUI.captainDefaultAnim.speed = 0;
         riverUI.captainDefaultAnim.nframes = 1;
-
-        static SDC_SpriteFrame defaultCptAnimFrames[] = { {0, 0, 128, 128} };
         riverUI.captainDefaultAnim.frames = &defaultCptAnimFrames[0];
+
+        dcRender_LoadTexture(&timImage, _binary_assets_textures_damage_tim_start);
+        
+        riverUI.captainDamageAnim.timImage.mode = timImage.mode;
+        riverUI.captainDamageAnim.timImage.crect = *timImage.crect;
+        riverUI.captainDamageAnim.timImage.prect = *timImage.prect;
+        riverUI.captainDamageAnim.speed = 0;
+        riverUI.captainDamageAnim.nframes = 1;
+        riverUI.captainDamageAnim.frames = &defaultCptAnimFrames[0];
+
+        dcRender_LoadTexture(&timImage, _binary_assets_textures_gameover_tim_start);
+        
+        riverUI.captainGameOverAnim.timImage.mode = timImage.mode;
+        riverUI.captainGameOverAnim.timImage.crect = *timImage.crect;
+        riverUI.captainGameOverAnim.timImage.prect = *timImage.prect;
+        riverUI.captainGameOverAnim.speed = 0;
+        riverUI.captainGameOverAnim.nframes = 1;
+        riverUI.captainGameOverAnim.frames = &defaultCptAnimFrames[0];
+
+        dcRender_LoadTexture(&timImage, _binary_assets_textures_speed_tim_start);
+        
+        riverUI.captainSpeedAnim.timImage.mode = timImage.mode;
+        riverUI.captainSpeedAnim.timImage.crect = *timImage.crect;
+        riverUI.captainSpeedAnim.timImage.prect = *timImage.prect;
+        riverUI.captainSpeedAnim.speed = 0;
+        riverUI.captainSpeedAnim.nframes = 1;
+        riverUI.captainSpeedAnim.frames = &defaultCptAnimFrames[0];
+
         riverUI.captainDrawLocation.x = 5;
         riverUI.captainDrawLocation.y = 171;
         riverUI.captainDrawLocation.h = 64;
@@ -321,6 +356,9 @@ void riverInitScene(tdGameMode* gameMode)
         riverUI.captainSprite.currAnimation = &riverUI.captainDefaultAnim;
         riverUI.captainSprite.currAnimFrame = 0;
         riverUI.captainSprite.currCounter = 0;
+
+        riverUI.capitainState = IDLE;
+        riverUI.timeInState = 0;
 
         riverBackgroundInitialized = 1;
     }
@@ -556,6 +594,7 @@ void riverUpdateScene(tdGameMode* gameMode)
     updateCamera();
      // Update cineamtic if needed
     updateCinematic();
+    riverUpdateUI();
 }
 
 void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
@@ -630,6 +669,7 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     FntPrint("Total distance: %d\n", totalDistance);
 }
 
+<<<<<<< HEAD
 void riverDrawLifesUI(tdGameMode* gameMode, SDC_Render* render)
 {
     RECT lifePosition = {0};
@@ -646,9 +686,40 @@ void riverDrawLifesUI(tdGameMode* gameMode, SDC_Render* render)
     }
 }
 
+void SetCapitanState(ECapitanState newState)
+{
+    riverUI.capitainState = newState;
+    riverUI.timeInState = 0;
+    
+    switch(newState)
+    {
+        case IDLE:
+            riverUI.captainSprite.currAnimation = &riverUI.captainDefaultAnim;
+            break;
+        case DAMAGE:
+            riverUI.captainSprite.currAnimation = &riverUI.captainDamageAnim;
+            break;
+        case SPEED:
+            riverUI.captainSprite.currAnimation = &riverUI.captainSpeedAnim;
+            break;
+        case GAMEOVER:
+            riverUI.captainSprite.currAnimation = &riverUI.captainGameOverAnim;
+            break;
+    }
+    
+}
+void riverUpdateUI()
+{
+    riverUI.timeInState++;
+    if( riverUI.capitainState != IDLE && riverUI.timeInState > 100 )
+    {
+        SetCapitanState(riverUI.capitainState);
+    }
+}
+
 void riverDrawUI(tdGameMode* gameMode, SDC_Render* render)
 {
-    dcRender_DrawQuad(render, &riverUI.captainDefaultAnim.timImage, &riverUI.captainDrawLocation);
+    dcRender_DrawQuad(render, &riverUI.captainSprite.currAnimation->timImage, &riverUI.captainDrawLocation);
     riverDrawLifesUI(gameMode, render);
 }
 
