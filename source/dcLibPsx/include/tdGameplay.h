@@ -89,3 +89,5 @@ void GetActorTransformOffset(tdActor* actor, VECTOR offset, MATRIX* outTransform
 void DrawActorOffset(tdActor* actor, VECTOR offset, SDC_Render* render, SDC_Camera* camera);
 void DrawActorArrayOffset(tdActor actorArray[], int numActors, VECTOR offset, SDC_Render* render, SDC_Camera* camera, int bDrawBoundingBox);
 void DrawActorBoundingBoxOffset(tdActor* actor, VECTOR offset, SDC_Render* render,  SDC_Camera* camera);
+
+int RandomBetween(int min, int max);

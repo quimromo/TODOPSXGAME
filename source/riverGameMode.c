@@ -15,6 +15,20 @@
 #define HIT_IMMUNITY_DURATION 60
 #define WALL HIT_IMMUNITY_DURATION 30
 
+#define MAX_OBSTACLES_PER_LONCHA 50
+#define MIN_SCROLL_SPEED 65
+
+#define PLAYER_HITBOX_SIZE 30
+
+#define JUMP_FORCE 300
+
+extern SDC_Broadphase Broadphase;
+
+SDC_Camera* RiverGameModeCamera;
+SDC_Render* RiverGameModeRender;
+
+int bLoadedPhisicsLoncha = 0;
+
 extern tdLoncha levelData_LVL_Lonchas;
 extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
 
@@ -24,6 +38,11 @@ SDC_Camera riverCamera;
 SDC_Texture riverBackground;
 int riverBackgroundInitialized = 0;
 extern unsigned long _binary_assets_textures_sky_psx_tim_start[];
+
+unsigned CurrentObstacles[MAX_OBSTACLES_PER_LONCHA];
+unsigned numObstacles;
+
+unsigned totalDistance = 0;
 
 extern unsigned long _binary_assets_textures_capitan_tim_start[];
 tdRiverUI riverUI;
@@ -44,6 +63,8 @@ enum ESteeringDirection
 };
 tdLoncha* currentLoncha;
 tdLoncha* nextLoncha;
+
+tdLoncha* currentPhisicsLoncha;
 unsigned long CurrentFrame = 0;
 
 VECTOR lonchaOffset = {0};
@@ -56,11 +77,13 @@ long CurrentSteering = 0;
 int bImmune = 0;
 int CurrImmunityFrames = 0;
 int ImmunityDuration = 0;
+long VerticalAcceleration = 0;
 
 // Movement Variables
 int scrollSpeed = 65;
+
 int maxScrollSpeed = 300;
-int scrollSpeedIncreasePerLoncha = 60;
+int scrollSpeedIncreasePerLoncha = 30;
 long SteeringStep = 100;
 long FrictionStep = 70;
 
@@ -70,7 +93,7 @@ long MinSteering = 40;
 int PrevSteering = STEERING_NONE;
 
 int currentCinematicTime = 0;
-int totalCinematicDuration = 2048;
+int totalCinematicDuration = 3000;
 SVECTOR introCinematicPath[] = {
     {0, 310, 1160},
     {-740, 370, 340+1000},
@@ -90,7 +113,7 @@ SVECTOR introCinematicLookAt[] = {
 char bCinematicMode = 0;
 
 extern int bEpicDebugMode;
-extern unsigned long _binary_assets_textures_texturaEpica_tim_start[];
+extern unsigned long _binary_assets_textures_T_Vapor_hull_tim_start[];
 
 tdLoncha* lonchasList[] = {
     &levelData_LVL_Loncha_00,
@@ -119,12 +142,45 @@ void InitializeLonchas()
         for(int j = 0; j<loncha->numActors; ++j)
         {
             // Initialize texture data
-            SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded( loncha->actors[i].meshData.texture_tim);
-            loncha->actors[i].meshData.mesh->textureData = *textureData;
+            SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded( loncha->actors[j].meshData.texture_tim);
+            loncha->actors[j].meshData.mesh->textureData = *textureData;
             
             // Initialize bounding box
-            InitializeActorBoundingBoxBasedOnMesh(&loncha->actors[i]);
+            InitializeActorBoundingBoxBasedOnMesh(&loncha->actors[j]);
         }
+    }
+}
+
+void ClearObstacles()
+{
+    for(int i = 0; i < numObstacles; ++i)
+    {
+        dcBF_removeShape(&Broadphase,CurrentObstacles[i]);
+    }
+    numObstacles = 0;
+}
+
+void registerLonchaObstacles(tdLoncha* Loncha)
+{
+    numObstacles = 0;
+    for(int i = 0; i < Loncha->numCollisions; ++i)
+    {
+        if (i > MAX_OBSTACLES_PER_LONCHA)
+        {
+            printf("Too many obstacles in a loncha :(");
+            return;
+        }
+        SDC_Shape shape;
+        shape.shapeType = ST_OOBB;
+        shape.oobb.center = Loncha->collisions[i].center;
+        shape.oobb.center.vz -= offsetToChangeLoncha >> 1;
+        shape.oobb.halfSize.vx = abs(Loncha->collisions[i].halfSize.vx);
+        shape.oobb.halfSize.vy = abs(Loncha->collisions[i].halfSize.vy);
+        shape.oobb.halfSize.vz = abs(Loncha->collisions[i].halfSize.vz);
+        shape.oobb.rotation = Loncha->collisions[i].rotation;
+
+        CurrentObstacles[numObstacles] = dcBF_addShape(&Broadphase, &shape);
+        numObstacles++;   
     }
 }
 
@@ -138,12 +194,8 @@ void IncrementScrollSpeed()
 }
 void IncrementLonchasListId()
 {
-    idInLonchasList++;
     int numLonchasInList = sizeof(lonchasList) / sizeof(lonchasList[0]);
-    if(idInLonchasList >= numLonchasInList)
-    {
-        idInLonchasList = 0;
-    }
+    idInLonchasList = RandomBetween(1, numLonchasInList);
 }
 
 tdLoncha* GetNewLoncha(void)
@@ -162,6 +214,7 @@ void OnPlayerObstacleHit()
     CurrImmunityFrames = 0;
     ImmunityDuration = HIT_IMMUNITY_DURATION;
     bImmune = 1;
+    scrollSpeed = MIN_SCROLL_SPEED;
 }
 
 void riverInitScene(tdGameMode* gameMode)
@@ -205,7 +258,7 @@ void riverInitScene(tdGameMode* gameMode)
     nextLoncha = GetNewLoncha();
 
     Player.meshData.mesh = &td_VAPOR_hull_Mesh;
-    Player.meshData.texture_tim = _binary_assets_textures_texturaEpica_tim_start;
+    Player.meshData.texture_tim = _binary_assets_textures_T_Vapor_hull_tim_start;
     SDC_Texture* textureData = GetTextureDataAndLoadIfNeeded(Player.meshData.texture_tim);
     Player.meshData.mesh->textureData = *textureData;
     Player.scale.vx = 4000;
@@ -243,6 +296,19 @@ void updatePlayerImmunity()
     {
         bImmune = 0;
         bPlayerVisible = 1;
+    }
+}
+
+void updateCollisions()
+{
+    SDC_Shape sphereShape;
+    sphereShape.shapeType = ST_SPHERE;
+    sphereShape.sphere.center = Player.position; 
+    sphereShape.sphere.radius = PLAYER_HITBOX_SIZE;
+
+    if( dcBF_shapeCollides(&Broadphase, &sphereShape ,RiverGameModeRender, RiverGameModeCamera ) )
+    {
+        OnPlayerObstacleHit();
     }
 }
 
@@ -298,12 +364,18 @@ void updatePlayer()
         }
     }
 
+    // if( _PAD(0,PADh ) & padState )
+    // {
+    //     Player.position.vy += VerticalAcceleration;
+    // }
+
     //Update rotation
     Player.rotation.vy = (-CurrentSteering * 400 ) / MaxSteering;
 
     Player.position.vx += CurrentSteering;
 
     updatePlayerImmunity();
+    updateCollisions();
 }
 
 void updateCamera()
@@ -341,7 +413,13 @@ void riverUpdateScene(tdGameMode* gameMode)
 
     int prevLonchaIdx = lonchaOffset.vz / offsetToChangeLoncha;
     lonchaOffset.vz += scrollSpeed;
+    dcBF_scrollAllShapes(&Broadphase,-scrollSpeed);
     int newLonchaIdx = lonchaOffset.vz / offsetToChangeLoncha;
+
+    if (!bCinematicMode)
+    {
+        totalDistance += scrollSpeed >> 3;
+    }
 
     if (prevLonchaIdx != newLonchaIdx)
     {
@@ -349,6 +427,15 @@ void riverUpdateScene(tdGameMode* gameMode)
         nextLoncha = GetNewLoncha();
         lonchaOffset.vz -= offsetToChangeLoncha;
         IncrementScrollSpeed();
+        bLoadedPhisicsLoncha = 0;
+    }
+
+    if (lonchaOffset.vz > offsetToChangeLoncha >> 1 && !bLoadedPhisicsLoncha && nextLoncha)
+    {
+        bLoadedPhisicsLoncha = 1;
+        currentPhisicsLoncha = nextLoncha;
+        ClearObstacles();
+        registerLonchaObstacles(currentPhisicsLoncha);
     }
 
     updatePlayer();
@@ -359,6 +446,8 @@ void riverUpdateScene(tdGameMode* gameMode)
 
 void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
 {
+    RiverGameModeCamera = gameMode->camera;
+    RiverGameModeRender = render;
     long cameraPosUnrealX = 0;
     long cameraPosUnrealY = -2000;
     long cameraPosUnrealZ = 1000;
@@ -419,7 +508,12 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     }
 
     if (bPlayerVisible)
-        DrawActor(&Player,render,gameMode->camera);
+    {
+        VECTOR playerOffset = {0,80,0};
+        DrawActorOffset(&Player, playerOffset, render,gameMode->camera);
+    }
+
+    FntPrint("Total distance: %d\n", totalDistance);
 }
 
 void riverDrawUI(tdGameMode* gameMode, SDC_Render* render)
@@ -441,19 +535,5 @@ void riverDrawUI(tdGameMode* gameMode, SDC_Render* render)
 
 void DrawBackground(tdGameMode* gameMode, SDC_Render* render)
 {
-    SVECTOR frontVector = {gameMode->camera->viewMatrix.m[0][2], gameMode->camera->viewMatrix.m[1][2], gameMode->camera->viewMatrix.m[2][2] };
-    VectorNormalSS(&frontVector, &frontVector);
-
-    SVECTOR BgPos = {0};
-    BgPos.vx += gameMode->camera->position.vx;
-    BgPos.vy += gameMode->camera->position.vy;
-    BgPos.vz += gameMode->camera->position.vz;
-    BgPos.vx += frontVector.vx * (render->orderingTableCount - 5);
-    BgPos.vy += frontVector.vy * (render->orderingTableCount - 5);
-    BgPos.vz += frontVector.vz * (render->orderingTableCount - 5);
-
-    MATRIX transform;
-    dcCamera_ApplyCameraTransform(gameMode->camera, &transform, &transform);
-
-    dcRender_DrawBackground(render, &riverBackground, &transform, BgPos);
+    dcRender_DrawBackground(render, &riverBackground);
 }
