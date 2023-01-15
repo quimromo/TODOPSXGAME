@@ -236,11 +236,17 @@ tdLoncha* GetNewLoncha(void)
     return newLoncha;
 }
 
+void CorrectUserLocation()
+{
+    CurrentSteering = Player.position.vx < 0 ? MaxSteering : -MaxSteering; 
+}
+
 void OnPlayerObstacleHit(SDC_Shape* Other)
 {
     if (Other->userData == USER_DATA_WALL)
     {
-        CurrentSteering = Player.position.vx < 0 ? MaxSteering : -MaxSteering; 
+        //At the moment harcoded in PlayerUpdate
+        //CorrectUserLocation();
     }
     else
     {
@@ -251,7 +257,7 @@ void OnPlayerObstacleHit(SDC_Shape* Other)
         bImmune = 1;
         scrollSpeed = MIN_SCROLL_SPEED;
 
-         // Increase scroll speed per loncha after first hit to get back to action faster
+        // Increase scroll speed per loncha after first hit to get back to action faster
         scrollSpeedIncreasePerLoncha = scrollSpeedIncreasePerLonchaAfterFirstHit;
     }
 }
@@ -437,6 +443,13 @@ void updatePlayer()
 
     updatePlayerImmunity();
     updateCollisions();
+
+    //hack for the side walls
+    if (DC_ABS(Player.position.vx) > 3300)
+    {
+        CorrectUserLocation();
+    }
+
 }
 
 void updateCamera()
