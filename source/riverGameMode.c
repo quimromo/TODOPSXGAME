@@ -53,6 +53,11 @@ SDC_Texture riverBackground;
 int riverBackgroundInitialized = 0;
 extern unsigned long _binary_assets_textures_sky_psx_tim_start[];
 
+SDC_Texture emptyLifeTexture;
+SDC_Texture fillLifeTexture;
+extern unsigned long _binary_assets_textures_empty_life_tim_start[];
+extern unsigned long _binary_assets_textures_fill_life_tim_start[];
+
 unsigned CurrentObstacles[MAX_OBSTACLES_PER_LONCHA];
 unsigned numObstacles;
 
@@ -92,6 +97,9 @@ int bImmune = 0;
 int CurrImmunityFrames = 0;
 int ImmunityDuration = 0;
 long VerticalAcceleration = 0;
+
+int MaxLives = 3;
+int NumLives = 0;
 
 // Movement Variables
 int scrollSpeed = 65;
@@ -241,6 +249,16 @@ void CorrectUserLocation()
     CurrentSteering = Player.position.vx < 0 ? MaxSteering : -MaxSteering; 
 }
 
+void DamagePlayer(void)
+{
+    --NumLives;
+
+    if (NumLives <= 0)
+    {
+        // TODO: game over
+    }
+}
+
 void OnPlayerObstacleHit(SDC_Shape* Other)
 {
     if (Other->userData == USER_DATA_WALL)
@@ -256,6 +274,7 @@ void OnPlayerObstacleHit(SDC_Shape* Other)
         ImmunityDuration = HIT_IMMUNITY_DURATION;
         bImmune = 1;
         scrollSpeed = MIN_SCROLL_SPEED;
+        DamagePlayer();
 
         // Increase scroll speed per loncha after first hit to get back to action faster
         scrollSpeedIncreasePerLoncha = scrollSpeedIncreasePerLonchaAfterFirstHit;
@@ -271,6 +290,16 @@ void riverInitScene(tdGameMode* gameMode)
         riverBackground.mode = timImage.mode;
         riverBackground.crect = *timImage.crect;
         riverBackground.prect = *timImage.prect;
+
+        dcRender_LoadTexture(&timImage, _binary_assets_textures_empty_life_tim_start);
+        emptyLifeTexture.mode = timImage.mode;
+        emptyLifeTexture.crect = *timImage.crect;
+        emptyLifeTexture.prect = *timImage.prect;
+
+        dcRender_LoadTexture(&timImage, _binary_assets_textures_fill_life_tim_start);
+        fillLifeTexture.mode = timImage.mode;
+        fillLifeTexture.crect = *timImage.crect;
+        fillLifeTexture.prect = *timImage.prect;
 
         dcRender_LoadTexture(&timImage, _binary_assets_textures_capitan_tim_start);
         
@@ -302,6 +331,7 @@ void riverInitScene(tdGameMode* gameMode)
     lonchaOffset = VECTOR_ZERO;
     currentLoncha = GetNewLoncha();
     nextLoncha = GetNewLoncha();
+    NumLives = MaxLives;
 
     Player.meshData.mesh = &td_VAPOR_hull_Mesh;
     Player.meshData.texture_tim = _binary_assets_textures_T_Vapor_hull_tim_start;
@@ -598,6 +628,21 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     }
 
     FntPrint("Total distance: %d\n", totalDistance);
+}
+
+void riverDrawLivesUI(tdGameMode* gameMode, SDC_Render* render)
+{
+    RECT lifePosition = {0};
+    lifePosition.w = lifePosition.h = 16;
+
+    for (int i = 0; i < MaxLives; ++i)
+    {
+        lifePosition.x = 5 + 20 * i;
+        lifePosition.y = 171 - 20;
+
+        SDC_Texture* renderTex = NumLives > i ? &fillLifeTexture : &emptyLifeTexture;
+        dcRender_DrawQuad(render, renderTex, lifePosition;)
+    }
 }
 
 void riverDrawUI(tdGameMode* gameMode, SDC_Render* render)
