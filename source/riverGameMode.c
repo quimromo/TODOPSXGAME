@@ -265,13 +265,9 @@ void DamagePlayer(void)
 
     if (NumLives <= 0)
     {
-<<<<<<< HEAD
         scrollSpeed = 0;
         SinkingGameOver = 1;
-=======
         SetCapitanState(GAMEOVER);
-        // TODO: game over
->>>>>>> 0e2e7f24d13beeb6260e3abf147d61242eb5fc98
     }
     else
     {
