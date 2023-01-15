@@ -16,6 +16,9 @@
 #define WALL HIT_IMMUNITY_DURATION 30
 
 #define MAX_OBSTACLES_PER_LONCHA 50
+#define MIN_SCROLL_SPEED 65
+
+#define PLAYER_HITBOX_SIZE 30
 
 extern SDC_Broadphase Broadphase;
 
@@ -68,9 +71,10 @@ int CurrImmunityFrames = 0;
 int ImmunityDuration = 0;
 
 // Movement Variables
-int scrollSpeed = 90;
+int scrollSpeed = 65;
+
 int maxScrollSpeed = 300;
-int scrollSpeedIncreasePerLoncha = 65;
+int scrollSpeedIncreasePerLoncha = 30;
 long SteeringStep = 100;
 long FrictionStep = 70;
 
@@ -201,6 +205,7 @@ void OnPlayerObstacleHit()
     CurrImmunityFrames = 0;
     ImmunityDuration = HIT_IMMUNITY_DURATION;
     bImmune = 1;
+    scrollSpeed = MIN_SCROLL_SPEED;
 }
 
 void riverInitScene(tdGameMode* gameMode)
@@ -268,7 +273,7 @@ void updateCollisions()
     SDC_Shape sphereShape;
     sphereShape.shapeType = ST_SPHERE;
     sphereShape.sphere.center = Player.position; 
-    sphereShape.sphere.radius = 110;
+    sphereShape.sphere.radius = PLAYER_HITBOX_SIZE;
 
     if( dcBF_shapeCollides(&Broadphase, &sphereShape ,RiverGameModeRender, RiverGameModeCamera ) )
     {
