@@ -149,11 +149,16 @@ void dcRender_LoadTexture(TIM_IMAGE* tim, u_long* texture) {
 void dcRender_DrawSpriteRect(SDC_Render* render, SDC_Texture* texture, short x, short y, short w, short h, const DVECTOR *uv, const CVECTOR *color) {
     SPRT *sprt = (SPRT*)render->nextPrimitive;
 
+    // X align 64 -> 6
+    // Y align 256 --> 8
+    u_short tpageX = texture->prect.x & !0x003f;
+    u_short tpageY = texture->prect.y & !0x00ff;
+
     setSprt(sprt);
     setXY0(sprt, x, y);
     setWH(sprt, w, h);
     setRGB0(sprt, color->r, color->g, color->b);
-    setUV0(sprt, uv->vx, uv->vy);
+    setUV0(sprt, uv->vx + (texture->prect.x & 0x003f), uv->vy + (texture->prect.y & 0x00ff));
     setClut(sprt, texture->crect.x, texture->crect.y);
 
     addPrim(render->orderingTable[render->doubleBufferIndex], sprt);
@@ -161,7 +166,8 @@ void dcRender_DrawSpriteRect(SDC_Render* render, SDC_Texture* texture, short x, 
     _dcRender_IncPrimitive(render, sizeof(SPRT));
 
     DR_TPAGE *tpri = (DR_TPAGE*)render->nextPrimitive;
-    u_short tpage = getTPage(texture->mode, 0, texture->prect.x, texture->prect.y);
+
+    u_short tpage = getTPage(texture->mode, 0, tpageX, tpageY);
     setDrawTPage(tpri, 0, 0, tpage);
     addPrim(render->orderingTable[render->doubleBufferIndex], tpri);
     _dcRender_IncPrimitive(render, sizeof(DR_TPAGE));

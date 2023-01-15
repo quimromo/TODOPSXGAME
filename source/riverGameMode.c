@@ -25,6 +25,9 @@ SDC_Texture riverBackground;
 int riverBackgroundInitialized = 0;
 extern unsigned long _binary_assets_textures_sky_psx_tim_start[];
 
+extern unsigned long _binary_assets_textures_capitan_tim_start[];
+tdRiverUI riverUI;
+
 tdGameMode riverGameMode = 
 {
     .camera = &riverCamera,
@@ -170,6 +173,27 @@ void riverInitScene(tdGameMode* gameMode)
         riverBackground.mode = timImage.mode;
         riverBackground.crect = *timImage.crect;
         riverBackground.prect = *timImage.prect;
+
+        dcRender_LoadTexture(&timImage, _binary_assets_textures_capitan_tim_start);
+        
+        riverUI.captainDefaultAnim.timImage.mode = timImage.mode;
+        riverUI.captainDefaultAnim.timImage.crect = *timImage.crect;
+        riverUI.captainDefaultAnim.timImage.prect = *timImage.prect;
+        
+        //riverUI.captainDefaultAnim.frames 
+        riverUI.captainDefaultAnim.speed = 0;
+        riverUI.captainDefaultAnim.nframes = 1;
+
+        static SDC_SpriteFrame defaultCptAnimFrames[] = { {0, 0, 128, 128} };
+        riverUI.captainDefaultAnim.frames = &defaultCptAnimFrames[0];
+        riverUI.captainDrawLocation.x = 5;
+        riverUI.captainDrawLocation.y = 171;
+        riverUI.captainDrawLocation.w = riverUI.captainDrawLocation.h = 64;
+
+        riverUI.captainSprite.currAnimation = &riverUI.captainDefaultAnim;
+        riverUI.captainSprite.currAnimFrame = 0;
+        riverUI.captainSprite.currCounter = 0;
+
         riverBackgroundInitialized = 1;
     }
     
@@ -200,6 +224,7 @@ void riverInitScene(tdGameMode* gameMode)
         bCinematicMode = 1;
         currentCinematicTime = 0;
     }
+
     
 }
 
@@ -384,6 +409,8 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
 
     DrawBackground(gameMode, render);
 
+    riverDrawUI(gameMode, render);
+
     // If debugging draw collisions
     if(bEpicDebugMode)
     {
@@ -393,6 +420,23 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
 
     if (bPlayerVisible)
         DrawActor(&Player,render,gameMode->camera);
+}
+
+void riverDrawUI(tdGameMode* gameMode, SDC_Render* render)
+{
+    DVECTOR uvs = { .vx = 0, .vy = 0};
+    CVECTOR color = { 127, 127, 127 };
+    dcRender_DrawSpriteRect(
+        render, 
+        &riverUI.captainDefaultAnim.timImage, 
+        riverUI.captainDrawLocation.x, 
+        riverUI.captainDrawLocation.y,
+        riverUI.captainDrawLocation.w,
+        riverUI.captainDrawLocation.h,
+        &uvs,
+        &color
+    );
+
 }
 
 void DrawBackground(tdGameMode* gameMode, SDC_Render* render)
