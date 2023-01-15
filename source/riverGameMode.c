@@ -137,11 +137,11 @@ int PrevSteering = STEERING_NONE;
 int currentCinematicTime = 0;
 int totalCinematicDuration = 3000;
 SVECTOR introCinematicPath[] = {
-    {0, 310, 1160},
-    {-740, 370, 340+1000},
-    {-740, 370, -840+1000},
-    {550, 370, -840+1000},
-    {550, 370, 510},
+    {0, 310+200, 1160},
+    {-740, 370+200, 340+1000},
+    {-740, 370+200, -840+1000},
+    {550, 370+200, -840+1000},
+    {550, 370+200, 510},
     {0, 1000, 2000}
 };
 SVECTOR introCinematicLookAt[] = {
