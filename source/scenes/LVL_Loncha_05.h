@@ -30,8 +30,8 @@ tdActor levelData_LVL_Loncha_05_actors[] = {
 .rotation={0, 0, 0}}
 };
 SDC_OOBB levelData_LVL_Loncha_05_collisions[] = {
-{.center={3270,0,0}, .halfSize={100,5000,4000}, .rotation={0,0,0}, .userData=1},
-{.center={-3300,0,0}, .halfSize={100,5000,4000}, .rotation={0,0,0}, .userData=1},
+{.center={3270,0,0}, .halfSize={100,10000,4000}, .rotation={0,0,0}, .userData=1},
+{.center={-3300,0,0}, .halfSize={100,10000,4000}, .rotation={0,0,0}, .userData=1},
 {.center={-10,0,2020}, .halfSize={706,302,706}, .rotation={0,0,0}, .userData=0},
 {.center={-10,0,1190}, .halfSize={706,302,706}, .rotation={0,0,0}, .userData=0},
 {.center={-10,0,-370}, .halfSize={706,302,706}, .rotation={0,0,0}, .userData=0},
