@@ -669,7 +669,6 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     FntPrint("Total distance: %d\n", totalDistance);
 }
 
-<<<<<<< HEAD
 void riverDrawLifesUI(tdGameMode* gameMode, SDC_Render* render)
 {
     RECT lifePosition = {0};
@@ -678,7 +677,7 @@ void riverDrawLifesUI(tdGameMode* gameMode, SDC_Render* render)
 
     for (int i = 0; i < MaxLives; ++i)
     {
-        lifePosition.x = 5 + 40 * i;
+        lifePosition.x = 12 + 40 * i;
         lifePosition.y = 171 - 20;
 
         SDC_Texture* renderTex = NumLives > i ? &fillLifeTexture : &emptyLifeTexture;
