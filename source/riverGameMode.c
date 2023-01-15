@@ -371,12 +371,16 @@ void riverInitScene(tdGameMode* gameMode)
 
     dcCamera_SetScreenResolution(gameMode->camera, SCREEN_WIDTH, SCREEN_HEIGHT);
     lonchaOffset = VECTOR_ZERO;
+    idInLonchasList = 0;
     currentLoncha = GetNewLoncha();
     nextLoncha = GetNewLoncha();
     NumLives = MaxLives;
     scrollSpeed = MIN_SCROLL_SPEED;
     SinkingGameOver = 0;
     SkinkingCounter = 0;
+
+    bImmune = 0;
+    bPlayerVisible = 1;
 
     Player.meshData.mesh = &td_VAPOR_hull_Mesh;
     Player.meshData.texture_tim = _binary_assets_textures_T_Vapor_hull_tim_start;
@@ -443,7 +447,7 @@ void UpdateSinking(void)
 
     if (SkinkingCounter >= 150)
     {
-        // TODO: game over screen
+        nextGameMode = &riverGameMode;
     }
 }
 

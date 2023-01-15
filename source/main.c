@@ -45,6 +45,7 @@ long distance = 800;
 long cameraHeight = 600;
 
 tdGameMode* currentGameMode = NULL;
+tdGameMode* nextGameMode = NULL;
 extern tdTIMDataHandler timData[10];
 
 int bDrawHouses = 0;
@@ -52,89 +53,8 @@ int bDrawHouses = 0;
 SVECTOR cameraOffset = {0, 0, 0};
 
 int bEpicDebugMode = 0;
-SDC_Mesh3D* sphereMesh;
 
 SDC_Broadphase Broadphase;
-
-void DrawHouses(SDC_Render* render, SDC_Camera* camera)
-{
-    long cameraPosUnrealX = 0;
-    long cameraPosUnrealY = -2000;
-    long cameraPosUnrealZ = 2000;
-
-    long distanceX = -cameraPosUnrealX;
-    long distanceY = cameraPosUnrealZ;
-    long distanceZ = -cameraPosUnrealY;
-
-
-    // Read pad state and move primitive
-    u_long padState = PadRead(0);
-
-    // input up/down will determine movement along the front vector of the cube
-    if( _PAD(0,PADLup ) & padState )
-    {
-        cameraOffset.vz += -128;
-    }
-    if( _PAD(0,PADLdown ) & padState )
-    {
-        cameraOffset.vz += 128;
-    }
-
-    // Input right/left will determine rotation aroung Y axis.
-    if( _PAD(0,PADLright ) & padState )
-    {
-        cameraOffset.vx += 128;
-    }
-    if( _PAD(0,PADLleft ) & padState )
-    {
-        cameraOffset.vx += -128;
-    }
-
-
-    VECTOR cameraLookAt = {cameraOffset.vx, cameraOffset.vy, cameraOffset.vz};
-    dcCamera_SetCameraPosition(camera, distanceX+cameraOffset.vx, distanceY+cameraOffset.vy, distanceZ+cameraOffset.vz);
-    dcCamera_LookAt(camera, &cameraLookAt);
-
-    VECTOR lonchaOffset = {0};
-    DrawLoncha(&levelData_LVL_Lonchas, lonchaOffset, render, camera);
-    if(bEpicDebugMode)
-    {
-        MATRIX sphereTransform = {0};
-        SVECTOR zeroRot = {0};
-        RotMatrix(&zeroRot, &sphereTransform);
-        TransMatrix(&sphereTransform, &cameraLookAt);
-
-        dcCamera_ApplyCameraTransform(camera, &sphereTransform, &sphereTransform);
-        
-        SDC_Shape sphereShape;
-        sphereShape.shapeType = ST_SPHERE;
-        sphereShape.sphere.center = cameraLookAt; 
-        sphereShape.sphere.radius = 512;
-
-        if( dcBF_shapeCollides(&Broadphase, &sphereShape,NULL,NULL ) )
-        {
-            drawParams.bUseConstantColor = 1;
-        }
-        else{
-            drawParams.bUseConstantColor = 0;
-        }
-
-
-        dcRender_DrawMesh( render, sphereMesh, &sphereTransform, &drawParams);
-        DrawLonchaCollisions(&levelData_LVL_Lonchas, lonchaOffset, render, camera);
-    }
-}
-
-void HousesDrawFunction(tdGameMode* gameMode, SDC_Render* render)
-{
-    DrawHouses(render, gameMode->camera);
-}
-
-
-void HousesUpdateLoop(tdGameMode* gameMode)
-{
-
-}
 
 void InitGameMode(tdGameMode* gameMode)
 {
@@ -190,8 +110,6 @@ int main(void)
 
     }
 
-    sphereMesh = dcMisc_generateSphereMesh(512, 7, 7);
-    
     dcCamera_SetScreenResolution(&camera, SCREEN_WIDTH, SCREEN_HEIGHT);
     dcCamera_SetCameraPosition(&camera, 0, cameraHeight, distance);
     dcCamera_LookAt(&camera, &VECTOR_ZERO);
@@ -199,17 +117,9 @@ int main(void)
     RotMatrix(&rotation, &transform);
     TransMatrix(&transform, &translation);
 
-    tdGameMode housesGameMode;
-    housesGameMode.camera = &camera;
-    housesGameMode.initFunction = NULL;
-    housesGameMode.updateLoopFunction = &HousesUpdateLoop;
-    housesGameMode.drawFunction = &HousesDrawFunction;
-
-    tdGameMode* gameModes[] = { &riverGameMode, &housesGameMode};
-    u_long gameModeIdx = 0;
-    u_long prevStartState = 0;
     u_long prevSelectState = 0;
-    InitGameMode(gameModes[gameModeIdx]);
+    currentGameMode = &riverGameMode;
+    InitGameMode(currentGameMode);
 
     int counterToUse = RCntCNT1;
 
@@ -218,18 +128,12 @@ int main(void)
         int primitivesBeforeFrame = totalPrimitives;
         // Cycle game-modes by pressing start
         u_long padState = PadRead(0);
-        u_long startState = _PAD(0,PADstart ) & padState;
-        if( !startState && prevStartState)
+        if( nextGameMode != NULL)
         {
-            gameModeIdx++;
-            int numGameModes = sizeof(gameModes) / sizeof(gameModes[0]);
-            if(gameModeIdx >= numGameModes)
-            {
-                gameModeIdx = 0;
-            }
-            InitGameMode(gameModes[gameModeIdx]);
+            currentGameMode = nextGameMode;
+            nextGameMode = NULL;
+            InitGameMode(currentGameMode);
         }
-        prevStartState = startState;
 
         // Debug mode using select
         int currentSelectState = (_PAD(0,PADselect ) & padState );
@@ -241,10 +145,10 @@ int main(void)
 
         // Update and draw the current game mode
         int counterBeforeUpdate = GetRCnt(counterToUse);
-        UpdateGameMode(gameModes[gameModeIdx]);
+        UpdateGameMode(currentGameMode);
         int counterAfterUpdate = GetRCnt(counterToUse);
         int counterBeforeDraw = GetRCnt(counterToUse);
-        DrawGameMode(gameModes[gameModeIdx], &render);
+        DrawGameMode(currentGameMode, &render);
         int counterAfterDraw = GetRCnt(counterToUse);
         int counterBeforeSwap = GetRCnt(counterToUse);
         dcRender_SwapBuffers(&render);

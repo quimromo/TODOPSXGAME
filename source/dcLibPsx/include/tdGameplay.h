@@ -66,7 +66,7 @@ typedef struct tdTIMDataHandler{
     SDC_Texture textureData;
 }tdTIMDataHandler;
 
-
+extern tdGameMode* nextGameMode;
 extern tdTIMDataHandler timData[10];
 SDC_Texture* GetTextureDataAndLoadIfNeeded(u_long* tim_identifier);
 
