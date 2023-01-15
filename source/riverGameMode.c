@@ -19,12 +19,15 @@
 #define HIT_IMMUNITY_DURATION 60
 #define WALL HIT_IMMUNITY_DURATION 30
 
+#define COLLISION_FRONT_OFFSET 400
+
 #define MAX_OBSTACLES_PER_LONCHA 50
 #define MIN_SCROLL_SPEED 65
 
 #define PLAYER_HITBOX_SIZE 30
 
 #define JUMP_FORCE 300
+#define GRAVITY_FORCE 50
 
 extern SDC_Broadphase Broadphase;
 
@@ -212,7 +215,7 @@ tdLoncha* GetNewLoncha(void)
 
 void OnPlayerObstacleHit()
 {
-    if (bImmune)
+    if (bImmune || VerticalAcceleration!=0)
         return;
 
     CurrImmunityFrames = 0;
@@ -285,7 +288,8 @@ void updateCollisions()
 {
     SDC_Shape sphereShape;
     sphereShape.shapeType = ST_SPHERE;
-    sphereShape.sphere.center = Player.position; 
+    sphereShape.sphere.center = Player.position;
+    sphereShape.sphere.center.vz -= COLLISION_FRONT_OFFSET;
     sphereShape.sphere.radius = PLAYER_HITBOX_SIZE;
 
     if( dcBF_shapeCollides(&Broadphase, &sphereShape ,RiverGameModeRender, RiverGameModeCamera ) )
@@ -297,6 +301,7 @@ void updateCollisions()
 void updatePlayer()
 {
     int bSteeringInThisFrame = 0;
+    int FrameSteeringStep = VerticalAcceleration==0 ? SteeringStep : SteeringStep >> 2;
     
     u_long padState = PadRead(0);
     if( _PAD(0,PADLright ) & padState )
@@ -307,7 +312,7 @@ void updatePlayer()
         }
         else if (PrevSteering == STEERING_RIGHT)
         {
-            CurrentSteering += SteeringStep;
+            CurrentSteering += FrameSteeringStep;
             if (CurrentSteering > MaxSteering)
             {
                 CurrentSteering = MaxSteering;
@@ -324,7 +329,7 @@ void updatePlayer()
         }
         else if (PrevSteering == STEERING_LEFT)
         {
-            CurrentSteering -= SteeringStep;
+            CurrentSteering -= FrameSteeringStep;
             if (CurrentSteering < -MaxSteering)
             {
                 CurrentSteering = -MaxSteering;
@@ -346,13 +351,31 @@ void updatePlayer()
         }
     }
 
-    // if( _PAD(0,PADh ) & padState )
-    // {
-    //     Player.position.vy += VerticalAcceleration;
-    // }
+    if( _PAD(0,PADRright ) & padState && Player.position.vy == 0)
+    {
+        VerticalAcceleration = JUMP_FORCE;
+    }
 
+    if (Player.position.vy > 0)
+    {   
+        if (VerticalAcceleration> 0)
+        {
+            VerticalAcceleration-=GRAVITY_FORCE;
+        }else{
+            VerticalAcceleration-=GRAVITY_FORCE >> 2;
+        }
+    }
+
+    Player.position.vy += VerticalAcceleration;
+
+    if (Player.position.vy < 0)
+    {
+        Player.position.vy = 0;
+        VerticalAcceleration = 0;
+    }
     //Update rotation
     Player.rotation.vy = (-CurrentSteering * 400 ) / MaxSteering;
+    Player.rotation.vx = (VerticalAcceleration );
 
     Player.position.vx += CurrentSteering;
 
