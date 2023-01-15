@@ -34,6 +34,8 @@
 #define JUMP_FORCE 300
 #define GRAVITY_FORCE 50
 
+#define USER_DATA_WALL 1
+
 extern SDC_Broadphase Broadphase;
 
 SDC_Camera* RiverGameModeCamera;
@@ -55,6 +57,9 @@ unsigned CurrentObstacles[MAX_OBSTACLES_PER_LONCHA];
 unsigned numObstacles;
 
 unsigned totalDistance = 0;
+
+extern unsigned long _binary_assets_textures_capitan_tim_start[];
+tdRiverUI riverUI;
 
 tdGameMode riverGameMode = 
 {
@@ -93,7 +98,7 @@ int scrollSpeed = 65;
 
 int maxScrollSpeed = 270;
 int scrollSpeedIncreasePerLoncha = 30;
-int screollSpeedIncreasePerLonchaAfterFirstHit = 50;
+int scrollSpeedIncreasePerLonchaAfterFirstHit = 50;
 long SteeringStep = 100;
 long FrictionStep = 70;
 
@@ -202,6 +207,7 @@ void registerLonchaObstacles(tdLoncha* Loncha)
         shape.oobb.halfSize.vy = abs(Loncha->collisions[i].halfSize.vy);
         shape.oobb.halfSize.vz = abs(Loncha->collisions[i].halfSize.vz);
         shape.oobb.rotation = Loncha->collisions[i].rotation;
+        shape.userData = Loncha->collisions[i].userData;
 
         CurrentObstacles[numObstacles] = dcBF_addShape(&Broadphase, &shape);
         numObstacles++;   
@@ -230,18 +236,24 @@ tdLoncha* GetNewLoncha(void)
     return newLoncha;
 }
 
-void OnPlayerObstacleHit()
+void OnPlayerObstacleHit(SDC_Shape* Other)
 {
-    if (bImmune || VerticalAcceleration!=0)
-        return;
+    if (Other->userData == USER_DATA_WALL)
+    {
+        CurrentSteering = Player.position.vx < 0 ? MaxSteering : -MaxSteering; 
+    }
+    else
+    {
+        if (bImmune || VerticalAcceleration!=0)
+            return;
+        CurrImmunityFrames = 0;
+        ImmunityDuration = HIT_IMMUNITY_DURATION;
+        bImmune = 1;
+        scrollSpeed = MIN_SCROLL_SPEED;
 
-    CurrImmunityFrames = 0;
-    ImmunityDuration = HIT_IMMUNITY_DURATION;
-    bImmune = 1;
-    scrollSpeed = MIN_SCROLL_SPEED;
-
-    // Increase scroll speed per loncha after first hit to get back to action faster
-    scrollSpeedIncreasePerLoncha = screollSpeedIncreasePerLonchaAfterFirstHit;
+         // Increase scroll speed per loncha after first hit to get back to action faster
+        scrollSpeedIncreasePerLoncha = scrollSpeedIncreasePerLonchaAfterFirstHit;
+    }
 }
 
 void riverInitScene(tdGameMode* gameMode)
@@ -253,6 +265,28 @@ void riverInitScene(tdGameMode* gameMode)
         riverBackground.mode = timImage.mode;
         riverBackground.crect = *timImage.crect;
         riverBackground.prect = *timImage.prect;
+
+        dcRender_LoadTexture(&timImage, _binary_assets_textures_capitan_tim_start);
+        
+        riverUI.captainDefaultAnim.timImage.mode = timImage.mode;
+        riverUI.captainDefaultAnim.timImage.crect = *timImage.crect;
+        riverUI.captainDefaultAnim.timImage.prect = *timImage.prect;
+        
+        //riverUI.captainDefaultAnim.frames 
+        riverUI.captainDefaultAnim.speed = 0;
+        riverUI.captainDefaultAnim.nframes = 1;
+
+        static SDC_SpriteFrame defaultCptAnimFrames[] = { {0, 0, 128, 128} };
+        riverUI.captainDefaultAnim.frames = &defaultCptAnimFrames[0];
+        riverUI.captainDrawLocation.x = 5;
+        riverUI.captainDrawLocation.y = 171;
+        riverUI.captainDrawLocation.h = 64;
+        riverUI.captainDrawLocation.w = 128;
+
+        riverUI.captainSprite.currAnimation = &riverUI.captainDefaultAnim;
+        riverUI.captainSprite.currAnimFrame = 0;
+        riverUI.captainSprite.currCounter = 0;
+
         riverBackgroundInitialized = 1;
     }
     
@@ -283,6 +317,7 @@ void riverInitScene(tdGameMode* gameMode)
         bCinematicMode = 1;
         currentCinematicTime = 0;
     }
+
     
 }
 
@@ -312,9 +347,10 @@ void updateCollisions()
     sphereShape.sphere.center.vz -= COLLISION_FRONT_OFFSET;
     sphereShape.sphere.radius = PLAYER_HITBOX_SIZE;
 
-    if( dcBF_shapeCollides(&Broadphase, &sphereShape ,RiverGameModeRender, RiverGameModeCamera ) )
+    SDC_Shape* CollResult = dcBF_shapeCollides(&Broadphase, &sphereShape ,RiverGameModeRender, RiverGameModeCamera );
+    if( CollResult )
     {
-        OnPlayerObstacleHit();
+        OnPlayerObstacleHit(CollResult);
     }
 }
 
@@ -533,6 +569,8 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
 
     DrawBackground(gameMode, render);
 
+    riverDrawUI(gameMode, render);
+
     // If debugging draw collisions
     if(bEpicDebugMode)
     {
@@ -547,6 +585,12 @@ void riverDrawScene(tdGameMode* gameMode, SDC_Render* render)
     }
 
     FntPrint("Total distance: %d\n", totalDistance);
+}
+
+void riverDrawUI(tdGameMode* gameMode, SDC_Render* render)
+{
+    dcRender_DrawQuad(render, &riverUI.captainDefaultAnim.timImage, &riverUI.captainDrawLocation);
+
 }
 
 void DrawBackground(tdGameMode* gameMode, SDC_Render* render)
