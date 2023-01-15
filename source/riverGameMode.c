@@ -102,11 +102,14 @@ int CurrImmunityFrames = 0;
 int ImmunityDuration = 0;
 long VerticalAcceleration = 0;
 
+int SinkingGameOver = 0;
+int SkinkingCounter = 0;
+
 int MaxLives = 3;
 int NumLives = 0;
 
 // Movement Variables
-int scrollSpeed = 65;
+int scrollSpeed = MIN_SCROLL_SPEED;
 
 int maxScrollSpeed = 270;
 int scrollSpeedIncreasePerLoncha = 30;
@@ -262,7 +265,8 @@ void DamagePlayer(void)
 
     if (NumLives <= 0)
     {
-        // TODO: game over
+        scrollSpeed = 0;
+        SinkingGameOver = 1;
     }
 }
 
@@ -370,6 +374,9 @@ void riverInitScene(tdGameMode* gameMode)
     currentLoncha = GetNewLoncha();
     nextLoncha = GetNewLoncha();
     NumLives = MaxLives;
+    scrollSpeed = MIN_SCROLL_SPEED;
+    SinkingGameOver = 0;
+    SkinkingCounter = 0;
 
     Player.meshData.mesh = &td_VAPOR_hull_Mesh;
     Player.meshData.texture_tim = _binary_assets_textures_T_Vapor_hull_tim_start;
@@ -428,7 +435,19 @@ void updateCollisions()
     }
 }
 
-void updatePlayer()
+void UpdateSinking(void)
+{
+    Player.position.vy -= 5;
+    Player.rotation.vx -= 10;
+    ++SkinkingCounter;
+
+    if (SkinkingCounter >= 150)
+    {
+        // TODO: game over screen
+    }
+}
+
+void updatePlayer(void)
 {
     int bSteeringInThisFrame = 0;
     int FrameSteeringStep = VerticalAcceleration==0 ? SteeringStep : SteeringStep >> 2;
@@ -590,8 +609,15 @@ void riverUpdateScene(tdGameMode* gameMode)
         registerLonchaObstacles(currentPhisicsLoncha);
     }
 
-    updatePlayer();
-    updateCamera();
+    if (SinkingGameOver)
+    {
+        UpdateSinking();
+    }
+    else
+    {
+        updatePlayer();
+        updateCamera();
+    }
      // Update cineamtic if needed
     updateCinematic();
     riverUpdateUI();
